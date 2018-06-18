@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vulkan/vulkan.h>
 
+#include "VulkanInstance.h"
+
 class VulkanEngine
 {
 public:
@@ -17,7 +19,7 @@ public:
     VulkanEngine(const VulkanEngine &other) = delete;
     void operator=(const VulkanEngine &other) = delete;
 
-    void initVulkan(const std::string &appName);
+    bool initVulkan(const std::string &appName, unsigned int appMajorVersion, unsigned int appMinorVersion);
     void mainLoop();
     void printVersion() const { std::cout << "Engine version " << m_engineVersionMajor << "." << m_engineVersionMinor << ".\n"; }
     void cleanup();
@@ -28,6 +30,8 @@ private:
 
     unsigned int m_engineVersionMinor = 1;
     unsigned int m_engineVersionMajor = 0;
+
+    VulkanInstance m_instance;
 
 };
 
