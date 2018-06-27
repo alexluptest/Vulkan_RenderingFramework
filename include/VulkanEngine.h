@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include "VulkanInstance.h"
+#include "Window.h"
 
 class VulkanEngine
 {
@@ -31,6 +32,7 @@ private:
     unsigned int m_engineVersionMinor = 1;
     unsigned int m_engineVersionMajor = 0;
 
+    Window m_window;
     VulkanInstance m_instance;
 
 };

@@ -19,6 +19,9 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
+    // Main loop
+    vulkanEngine.mainLoop();
+
     // Cleanup vulkan
     vulkanEngine.cleanup();
 

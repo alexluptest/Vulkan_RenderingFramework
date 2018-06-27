@@ -6,12 +6,15 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
 {
     bool res = true;
 
+    // Window initialization
+    res = m_window.init("Vulkan", 800, 600);
+    if (res == false)
+        return res;
+
     // Instance
     res = m_instance.init(appName, m_engineVersionMinor, m_engineVersionMajor, appMajorVersion, appMinorVersion);
     if (res == false) 
         return res;
-
-    // Vulkan initialization
 
     // Success
     return res;
@@ -19,9 +22,13 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
 
 void VulkanEngine::mainLoop()
 {
+    m_window.run();
 }
 
 void VulkanEngine::cleanup()
 {
+    // Instance
     m_instance.cleanup();
+    // Window
+    m_window.cleanup();
 }
