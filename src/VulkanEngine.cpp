@@ -23,4 +23,5 @@ void VulkanEngine::mainLoop()
 
 void VulkanEngine::cleanup()
 {
+    m_instance.cleanup();
 }

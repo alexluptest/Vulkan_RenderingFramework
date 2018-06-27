@@ -6,6 +6,7 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 
 class VulkanInstance
 {
@@ -18,10 +19,13 @@ public:
     bool init(const std::string &appName, 
         unsigned int major, unsigned int minor,
         unsigned int appMajor, unsigned int appMinor);
+    void cleanup();
 
 private:
 
     VkInstance m_vkInstance;
+
+    std::vector<VkExtensionProperties> m_supportedExtensions;
 
 };
 

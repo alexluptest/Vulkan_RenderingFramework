@@ -1,18 +1,42 @@
 #include "VulkanInstance.h"
 
-VulkanInstance::~VulkanInstance()
-{
-    vkDestroyInstance(m_vkInstance, nullptr);
-}
+VulkanInstance::~VulkanInstance() {}
 
 bool VulkanInstance::init(const std::string &appName, 
     unsigned int engineMajor, unsigned int engineMinor,
     unsigned int appMajor, unsigned int appMinor)
 {
+    VkResult res = VK_SUCCESS;
+
     // Get a list of required extensions by GLFW3
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-    
+
+    // Get a list of supported extensions
+
+    // Get extension count
+    uint32_t extensionCount = 0;
+    res = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+    if (res != VK_SUCCESS)
+    {
+        std::cout << "Failed to get supported extension count. \n";
+        return false;
+    }
+    // Get the list of supported extensions
+    m_supportedExtensions.resize(extensionCount);
+    res = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, m_supportedExtensions.data());
+    if (res != VK_SUCCESS)
+    {
+        std::cout << "Failed to enumerate the supported extensions. \n";
+        return false;
+    }
+    // Print list of supported extensions
+    std::cout << "Supported extensions: \n";
+    for (auto &extension : m_supportedExtensions)
+    {
+        std::cout << extension.extensionName << "\n";
+    }
+
     // Application info
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -33,7 +57,7 @@ bool VulkanInstance::init(const std::string &appName,
     instanceInfo.ppEnabledLayerNames = nullptr;
 
     // Create instance
-    VkResult res = vkCreateInstance(&instanceInfo, nullptr, &m_vkInstance);
+    res = vkCreateInstance(&instanceInfo, nullptr, &m_vkInstance);
     if (res != VK_SUCCESS)
     {
         std::cout << "Failed to create Vulkan instance. \n";
@@ -42,4 +66,9 @@ bool VulkanInstance::init(const std::string &appName,
 
     // Success
     return true;
+}
+
+void VulkanInstance::cleanup()
+{
+    vkDestroyInstance(m_vkInstance, nullptr);
 }
