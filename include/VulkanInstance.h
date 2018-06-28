@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <cstring>
 
 class VulkanInstance
 {
@@ -23,9 +24,14 @@ public:
 
 private:
 
+    bool m_enableValidationLayers = true;
+
     VkInstance m_vkInstance;
 
     std::vector<VkExtensionProperties> m_supportedExtensions;
+    std::vector<VkLayerProperties> m_supportedValidationLayers;
+
+    bool checkValidationLayerSupport(const std::vector<const char*> &requestedValidationLayers);
 
 };
 

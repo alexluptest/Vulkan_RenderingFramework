@@ -8,9 +8,29 @@ bool VulkanInstance::init(const std::string &appName,
 {
     VkResult res = VK_SUCCESS;
 
+    // Initialize a list of validation layers to enable
+    std::vector<const char*> validationLayers;
+    if (m_enableValidationLayers)
+        validationLayers = { "VK_LAYER_LUNARG_standard_validation" };
+    if (m_enableValidationLayers)
+    {
+        if (checkValidationLayerSupport(validationLayers) == false)
+        {
+            std::cout << "Failed to find all the requested validation layers.\n";
+            return false;
+        }
+    }
+
     // Get a list of required extensions by GLFW3
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+    
+    // Build a list of required extensions
+    std::vector<const char*> requestedExtensions;
+    for (int i = 0; i < glfwExtensionCount; ++i)
+        requestedExtensions.push_back(glfwExtensions[i]);
+    if (m_enableValidationLayers)
+        requestedExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 
     // Get a list of supported extensions
 
@@ -37,6 +57,9 @@ bool VulkanInstance::init(const std::string &appName,
         std::cout << extension.extensionName << "\n";
     }
 
+    // Check if all the requested extensions are available
+    // TODO
+
     // Application info
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -50,11 +73,14 @@ bool VulkanInstance::init(const std::string &appName,
     VkInstanceCreateInfo instanceInfo = {};
     instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instanceInfo.pApplicationInfo = &appInfo;
-    instanceInfo.enabledExtensionCount = glfwExtensionCount;
-    instanceInfo.ppEnabledExtensionNames = glfwExtensions;
-    instanceInfo.enabledLayerCount = 0;
+    instanceInfo.enabledExtensionCount = requestedExtensions.size();
+    instanceInfo.ppEnabledExtensionNames = requestedExtensions.data();
+    if (m_enableValidationLayers)
+    {
+        instanceInfo.enabledLayerCount = validationLayers.size();
+        instanceInfo.ppEnabledLayerNames = validationLayers.data();
+    }
     instanceInfo.flags = 0;
-    instanceInfo.ppEnabledLayerNames = nullptr;
 
     // Create instance
     res = vkCreateInstance(&instanceInfo, nullptr, &m_vkInstance);
@@ -71,4 +97,57 @@ bool VulkanInstance::init(const std::string &appName,
 void VulkanInstance::cleanup()
 {
     vkDestroyInstance(m_vkInstance, nullptr);
+}
+
+bool VulkanInstance::checkValidationLayerSupport(const std::vector<const char*> &requestedValidationLayers)
+{
+    VkResult res;
+
+    // Get validation layer count
+    uint32_t layerCount = 0;
+    res = vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+    if (res != VK_SUCCESS)
+    {
+        std::cout << "Failed to get validation layer count. \n";
+        return false;
+    }
+
+    if (layerCount != 0)
+        m_supportedValidationLayers.resize(layerCount);
+
+    // Get available validation layers
+    res = vkEnumerateInstanceLayerProperties(&layerCount, m_supportedValidationLayers.data());
+    if (res != VK_SUCCESS)
+    {
+        std::cout << "Failed to get the available validation layers. \n";
+        return false;
+    }
+
+    // Print available validation layers
+    std::cout << "Validation layers: \n";
+    for (auto &validationLayer : m_supportedValidationLayers)
+        std::cout << validationLayer.layerName << "\n";
+
+    // Check if all the requested validation layers are available
+    for (auto &requestedLayer : requestedValidationLayers)
+    {
+        bool layerFound = false;
+        for (auto &validationLayer : m_supportedValidationLayers)
+        {
+            if (std::strcmp(requestedLayer, validationLayer.layerName) == 0)
+            {
+                layerFound = true;
+                break;
+            }            
+        }
+
+        if (layerFound == false)
+        {
+            std::cout << "Validation layer " << requestedLayer << " is not available. \n";
+            return false;
+        }
+    }
+
+    return true;
+
 }
