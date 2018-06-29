@@ -53,7 +53,7 @@ bool VulkanInstance::init(const std::string &appName,
         return false;
     }
     // Print list of supported extensions
-    std::cout << "Supported extensions: \n";
+    std::cout << "\nSupported extensions: \n\n";
     for (auto &extension : m_supportedExtensions)
     {
         std::cout << extension.extensionName << "\n";
@@ -147,7 +147,7 @@ bool VulkanInstance::checkValidationLayerSupport(const std::vector<const char*> 
     }
 
     // Print available validation layers
-    std::cout << "Validation layers: \n";
+    std::cout << "\nValidation layers: \n\n";
     for (auto &validationLayer : m_supportedValidationLayers)
         std::cout << validationLayer.layerName << "\n";
 

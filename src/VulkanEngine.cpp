@@ -16,6 +16,11 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     if (res == false) 
         return res;
 
+    // Physical device
+    res = m_physicalDevice.init(m_instance.vulkanInstance());
+    if (res == false)
+        return res;
+
     // Success
     return res;
 }

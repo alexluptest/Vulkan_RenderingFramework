@@ -22,6 +22,8 @@ public:
         unsigned int appMajor, unsigned int appMinor);
     void cleanup();
 
+    const inline VkInstance vulkanInstance() const { return m_vkInstance; }
+
 private:
 
     bool m_enableValidationLayers = true;
