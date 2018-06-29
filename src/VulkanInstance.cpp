@@ -1,5 +1,7 @@
 #include "VulkanInstance.h"
 
+#include "VulkanHelper.h"
+
 VulkanInstance::~VulkanInstance() {}
 
 bool VulkanInstance::init(const std::string &appName, 
@@ -90,12 +92,33 @@ bool VulkanInstance::init(const std::string &appName,
         return false;
     }
 
+    // Setup debug callback
+    if (m_enableValidationLayers)
+    {
+        VkDebugReportCallbackCreateInfoEXT createInfo = {};
+        createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+        // Filter which types of messages to receive
+        createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+        // Set callback function
+        createInfo.pfnCallback = VulkanInstance::debugCallback;
+
+        res = createDebugReportCallbackEXT(m_vkInstance, &createInfo, nullptr, &m_debugCallback);
+        if (res != VK_SUCCESS)
+        {
+            std::cout << "Failed to create the debug callback.\n";
+            return false;
+        }
+    }
+
     // Success
     return true;
 }
 
 void VulkanInstance::cleanup()
 {
+    if (m_enableValidationLayers)
+        destroyDebugReportCallbackEXT(m_vkInstance, m_debugCallback, nullptr);
+
     vkDestroyInstance(m_vkInstance, nullptr);
 }
 
@@ -149,5 +172,17 @@ bool VulkanInstance::checkValidationLayerSupport(const std::vector<const char*> 
     }
 
     return true;
+}
 
+VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInstance::debugCallback(VkDebugReportFlagsEXT flags,
+        VkDebugReportObjectTypeEXT objType,
+        uint64_t obj,
+        size_t location,
+        int32_t code,
+        const char* layerPrefix,
+        const char* msg,
+        void* userData)
+{
+    std::cerr << "validation layer: " << msg << std::endl;
+    return VK_FALSE;
 }

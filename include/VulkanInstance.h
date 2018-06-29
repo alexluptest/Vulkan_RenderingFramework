@@ -27,11 +27,22 @@ private:
     bool m_enableValidationLayers = true;
 
     VkInstance m_vkInstance;
+    VkDebugReportCallbackEXT m_debugCallback;
 
     std::vector<VkExtensionProperties> m_supportedExtensions;
     std::vector<VkLayerProperties> m_supportedValidationLayers;
 
     bool checkValidationLayerSupport(const std::vector<const char*> &requestedValidationLayers);
+
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags,
+        VkDebugReportObjectTypeEXT objType,
+        uint64_t obj,
+        size_t location,
+        int32_t code,
+        const char* layerPrefix,
+        const char* msg,
+        void* userData
+    );
 
 };
 
