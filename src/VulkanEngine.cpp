@@ -16,8 +16,13 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     if (res == false) 
         return res;
 
-    // Physical device
+    // Physical device init
     res = m_physicalDevice.init(m_instance.vulkanInstance());
+    if (res == false)
+        return res;
+
+    // Physical device find queue family
+    res = m_physicalDevice.findQueueFamilies(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
     if (res == false)
         return res;
 

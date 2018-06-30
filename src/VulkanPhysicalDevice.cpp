@@ -101,3 +101,62 @@ bool VulkanPhysicalDevice::hasRequiredFeatures(VkPhysicalDevice &physicalDevice,
 
     return true;
 }
+
+bool VulkanPhysicalDevice::findQueueFamilies(VkQueueFlags requiredQueueFamilyFlags)
+{
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, nullptr);
+
+    if (queueFamilyCount == 0)
+    {
+        std::cout << "No queue families found. \n";
+        return false;
+    }
+    std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, queueFamilyProperties.data());
+
+    // Print queue family properties
+    std::cout << "\nQueue families: \n";
+    for (auto &queueFamilyProp : queueFamilyProperties)
+    {
+        if (queueFamilyProp.queueCount > 0)
+        {
+            std::cout << "Queue count: " << queueFamilyProp.queueCount << "\n";
+            if (queueFamilyProp.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                std::cout << "Graphics queue family. \n";
+            if (queueFamilyProp.queueFlags & VK_QUEUE_COMPUTE_BIT)
+                std::cout << "Compute queue familiy. \n";
+            if (queueFamilyProp.queueFlags & VK_QUEUE_TRANSFER_BIT)
+                std::cout << "Transfer queue family. \n";
+            if (queueFamilyProp.queueFlags & VK_QUEUE_SPARSE_BINDING_BIT)
+                std::cout << "Sparse binding queue family. \n";
+        }
+    }
+
+
+    for (auto &queueFamilyProp : queueFamilyProperties)
+    {
+        if (queueFamilyProp.queueCount > 0)
+        {
+            if (requiredQueueFamilyFlags & VK_QUEUE_GRAPHICS_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_GRAPHICS_BIT) == false)
+                continue;
+            if (requiredQueueFamilyFlags & VK_QUEUE_COMPUTE_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_COMPUTE_BIT) == false)
+                continue;
+            if (requiredQueueFamilyFlags & VK_QUEUE_TRANSFER_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_TRANSFER_BIT) == false)
+                continue;
+            if (requiredQueueFamilyFlags & VK_QUEUE_SPARSE_BINDING_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) == false)
+                continue;
+            
+            // Store queue family index that have all the required capabilities
+            m_queueFamilyIndex = &queueFamilyProp - &queueFamilyProperties[0];
+        }
+    }
+
+    if (m_queueFamilyIndex == -1)
+    {
+        std::cout << "Failed to find a queue family that satisfies all the requirements. \n";
+        return false;
+    }
+
+    return true;
+}
