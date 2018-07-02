@@ -26,6 +26,11 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     if (res == false)
         return res;
 
+    // Logical device
+    res = m_logicalDevice.init(m_physicalDevice.get(), m_physicalDevice.getQueueFamilyIndex(), 1);
+    if (res == false)
+        return res;
+
     // Success
     return res;
 }
@@ -37,6 +42,8 @@ void VulkanEngine::mainLoop()
 
 void VulkanEngine::cleanup()
 {
+    // Logical device
+    m_logicalDevice.cleanup();
     // Instance
     m_instance.cleanup();
     // Window

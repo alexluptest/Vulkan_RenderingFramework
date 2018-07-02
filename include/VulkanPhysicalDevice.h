@@ -12,6 +12,7 @@ public:
     bool findQueueFamilies(VkQueueFlags requiredQueueFamilyFlags);
 
     inline const int getQueueFamilyIndex() const { return m_queueFamilyIndex; }
+    inline const VkPhysicalDevice &get() const { return m_physicalDevice; }
 
 private:
 

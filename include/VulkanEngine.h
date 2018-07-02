@@ -6,6 +6,7 @@
 
 #include "VulkanInstance.h"
 #include "VulkanPhysicalDevice.h"
+#include "VulkanLogicalDevice.h"
 #include "Window.h"
 
 class VulkanEngine
@@ -36,6 +37,7 @@ private:
     Window m_window;
     VulkanInstance m_instance;
     VulkanPhysicalDevice m_physicalDevice;
+    VulkanLogicalDevice m_logicalDevice;
 
 };
 
