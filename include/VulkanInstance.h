@@ -22,13 +22,13 @@ public:
         unsigned int appMajor, unsigned int appMinor);
     void cleanup();
 
-    const inline VkInstance vulkanInstance() const { return m_vkInstance; }
+    const inline VkInstance get() const { return m_instance; }
 
 private:
 
     bool m_enableValidationLayers = true;
 
-    VkInstance m_vkInstance;
+    VkInstance m_instance = VK_NULL_HANDLE;
     VkDebugReportCallbackEXT m_debugCallback;
 
     std::vector<VkExtensionProperties> m_supportedExtensions;

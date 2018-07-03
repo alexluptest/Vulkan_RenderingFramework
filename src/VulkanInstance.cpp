@@ -85,7 +85,7 @@ bool VulkanInstance::init(const std::string &appName,
     instanceInfo.flags = 0;
 
     // Create instance
-    res = vkCreateInstance(&instanceInfo, nullptr, &m_vkInstance);
+    res = vkCreateInstance(&instanceInfo, nullptr, &m_instance);
     if (res != VK_SUCCESS)
     {
         std::cout << "Failed to create Vulkan instance. \n";
@@ -102,7 +102,7 @@ bool VulkanInstance::init(const std::string &appName,
         // Set callback function
         createInfo.pfnCallback = VulkanInstance::debugCallback;
 
-        res = createDebugReportCallbackEXT(m_vkInstance, &createInfo, nullptr, &m_debugCallback);
+        res = createDebugReportCallbackEXT(m_instance, &createInfo, nullptr, &m_debugCallback);
         if (res != VK_SUCCESS)
         {
             std::cout << "Failed to create the debug callback.\n";
@@ -117,9 +117,10 @@ bool VulkanInstance::init(const std::string &appName,
 void VulkanInstance::cleanup()
 {
     if (m_enableValidationLayers)
-        destroyDebugReportCallbackEXT(m_vkInstance, m_debugCallback, nullptr);
+        destroyDebugReportCallbackEXT(m_instance, m_debugCallback, nullptr);
 
-    vkDestroyInstance(m_vkInstance, nullptr);
+    if (m_instance != VK_NULL_HANDLE)
+        vkDestroyInstance(m_instance, nullptr);
 }
 
 bool VulkanInstance::checkValidationLayerSupport(const std::vector<const char*> &requestedValidationLayers)

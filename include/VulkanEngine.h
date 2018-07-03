@@ -8,6 +8,7 @@
 #include "VulkanPhysicalDevice.h"
 #include "VulkanLogicalDevice.h"
 #include "VulkanQueue.h"
+#include "VulkanDisplay.h"
 #include "Window.h"
 
 class VulkanEngine
@@ -40,6 +41,7 @@ private:
     VulkanPhysicalDevice m_physicalDevice;
     VulkanLogicalDevice m_logicalDevice;
     VulkanQueue m_graphicsQueue;
+    VulkanDisplay m_display;
 
 };
 

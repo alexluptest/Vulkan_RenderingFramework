@@ -16,23 +16,24 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     if (res == false) 
         return res;
 
-    // Physical device init
-    res = m_physicalDevice.init(m_instance.vulkanInstance());
+    // Display
+    res = m_display.createSurface(m_instance.get(), m_window.window());
     if (res == false)
         return res;
 
-    // Physical device find queue family
-    res = m_physicalDevice.findQueueFamilies(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
+    // Physical device init
+    res = m_physicalDevice.init(m_instance.get(), VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, m_display.surface());
     if (res == false)
         return res;
 
     // Logical device
-    res = m_logicalDevice.init(m_physicalDevice.get(), m_physicalDevice.getQueueFamilyIndex(), 1);
+    res = m_logicalDevice.init(m_physicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex(), 1);
     if (res == false)
         return res;
 
     // Graphics queue
-    m_graphicsQueue.init(m_logicalDevice.get(), m_physicalDevice.getQueueFamilyIndex(), 0);
+    m_graphicsQueue.init(m_logicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex(), 0);
+
 
     // Success
     return res;
@@ -45,6 +46,8 @@ void VulkanEngine::mainLoop()
 
 void VulkanEngine::cleanup()
 {
+    // Display
+    m_display.cleanup(m_instance.get());
     // Logical device
     m_logicalDevice.cleanup();
     // Instance

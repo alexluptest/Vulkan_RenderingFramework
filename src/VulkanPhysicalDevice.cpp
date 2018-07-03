@@ -4,7 +4,9 @@
 #include <vector>
 #include <algorithm>
 
-bool VulkanPhysicalDevice::init(VkInstance instance)
+bool VulkanPhysicalDevice::init(VkInstance instance, 
+    VkQueueFlags requiredQueueFamilyFlags, 
+    VkSurfaceKHR surface)
 {
     VkResult res;
 
@@ -49,8 +51,33 @@ bool VulkanPhysicalDevice::init(VkInstance instance)
         DeviceRank currenDeviceRank = {};
         if (hasRequiredFeatures(currentDevice, deviceProperties, deviceFeatures, currenDeviceRank.deviceScore))
         {
-            currenDeviceRank.physicalDevice = currentDevice;
-            physicalDeviceRanks.push_back(currenDeviceRank);
+            uint32_t queueFamilyCount = 0;
+            vkGetPhysicalDeviceQueueFamilyProperties(currentDevice, &queueFamilyCount, nullptr);
+            if (queueFamilyCount == 0)
+            {
+                std::cout << "No queue families found. \n";
+                return false;
+            }
+            std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
+            vkGetPhysicalDeviceQueueFamilyProperties(currentDevice, &queueFamilyCount, queueFamilyProperties.data());
+
+            // Only add devices that have presentation support
+            for (auto &queueFamilyProperty : queueFamilyProperties)
+            {
+                int queueFamilyIndex = &queueFamilyProperty - &queueFamilyProperties[0];
+                // Check if the current device has presentation support
+                VkBool32 presentationSupport = VK_FALSE;
+                res = vkGetPhysicalDeviceSurfaceSupportKHR(currentDevice, queueFamilyIndex, surface, &presentationSupport);
+                if (res != VK_SUCCESS)
+                    std::cout << "Failed to check if the current device has presentation support for the current queue family. \n";
+                if (presentationSupport)
+                {
+                    // We found a queue family that has presentation suppor for the current device so we can stop
+                    currenDeviceRank.physicalDevice = currentDevice;
+                    physicalDeviceRanks.push_back(currenDeviceRank);
+                    break;
+                }
+            }
         }
     }
 
@@ -80,6 +107,10 @@ bool VulkanPhysicalDevice::init(VkInstance instance)
         return false;
     }
 
+    // Initialize queue family indices
+    if (!findQueueFamilies(requiredQueueFamilyFlags, surface))
+        return false;
+
     return true;
 }
 
@@ -102,7 +133,7 @@ bool VulkanPhysicalDevice::hasRequiredFeatures(VkPhysicalDevice &physicalDevice,
     return true;
 }
 
-bool VulkanPhysicalDevice::findQueueFamilies(VkQueueFlags requiredQueueFamilyFlags)
+bool VulkanPhysicalDevice::findQueueFamilies(VkQueueFlags requiredQueueFamilyFlags, VkSurfaceKHR surface)
 {
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, nullptr);
@@ -133,28 +164,55 @@ bool VulkanPhysicalDevice::findQueueFamilies(VkQueueFlags requiredQueueFamilyFla
         }
     }
 
-
     for (auto &queueFamilyProp : queueFamilyProperties)
     {
         if (queueFamilyProp.queueCount > 0)
         {
-            if (requiredQueueFamilyFlags & VK_QUEUE_GRAPHICS_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_GRAPHICS_BIT) == false)
-                continue;
-            if (requiredQueueFamilyFlags & VK_QUEUE_COMPUTE_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_COMPUTE_BIT) == false)
-                continue;
-            if (requiredQueueFamilyFlags & VK_QUEUE_TRANSFER_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_TRANSFER_BIT) == false)
-                continue;
-            if (requiredQueueFamilyFlags & VK_QUEUE_SPARSE_BINDING_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) == false)
-                continue;
-            
-            // Store queue family index that have all the required capabilities
-            m_queueFamilyIndex = &queueFamilyProp - &queueFamilyProperties[0];
+            int queueFamilyIndex = &queueFamilyProp - &queueFamilyProperties[0];
+
+            // Check if the current queue family has presentation support
+            if (m_presentationQueueFamilyIndex == -1)
+            {
+                VkBool32 presentationSupport = VK_FALSE;
+                VkResult res = vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, queueFamilyIndex, surface, &presentationSupport);
+                if (res != VK_SUCCESS)
+                    std::cout << "Failed to check if the current device has presentation support for the current queue family. \n";
+
+                // Store queue family index that has presentation support
+                if (presentationSupport)
+                    m_presentationQueueFamilyIndex = queueFamilyIndex;
+            }
+
+            // Check is the current queue family supports graphics operations
+            if (m_graphicsQueueFamilyIndex == -1)
+            {
+                if (requiredQueueFamilyFlags & VK_QUEUE_GRAPHICS_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_GRAPHICS_BIT) == false)
+                    continue;
+                if (requiredQueueFamilyFlags & VK_QUEUE_COMPUTE_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_COMPUTE_BIT) == false)
+                    continue;
+                if (requiredQueueFamilyFlags & VK_QUEUE_TRANSFER_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_TRANSFER_BIT) == false)
+                    continue;
+                if (requiredQueueFamilyFlags & VK_QUEUE_SPARSE_BINDING_BIT) if ((queueFamilyProp.queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) == false)
+                    continue;
+                
+                // Store queue family index that have all the required capabilities
+                m_graphicsQueueFamilyIndex = &queueFamilyProp - &queueFamilyProperties[0];
+            }
+
+            if (m_presentationQueueFamilyIndex != -1 &&
+                m_graphicsQueueFamilyIndex != -1)
+                break;
         }
     }
 
-    if (m_queueFamilyIndex == -1)
+    if (m_graphicsQueueFamilyIndex == -1)
     {
         std::cout << "Failed to find a queue family that satisfies all the requirements. \n";
+        return false;
+    }
+    if (m_presentationQueueFamilyIndex == -1)
+    {
+        std::cout << "Failed to find a queue family that has presentation support. \n";
         return false;
     }
 
