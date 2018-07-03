@@ -33,7 +33,7 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
 
     // Graphics queue
     m_graphicsQueue.init(m_logicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex(), 0);
-
+    m_presentationQueue.init(m_logicalDevice.get(), m_physicalDevice.getPresentationQueueFamilyIndex(), 0);
 
     // Success
     return res;

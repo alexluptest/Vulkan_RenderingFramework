@@ -40,7 +40,7 @@ private:
     VulkanInstance m_instance;
     VulkanPhysicalDevice m_physicalDevice;
     VulkanLogicalDevice m_logicalDevice;
-    VulkanQueue m_graphicsQueue;
+    VulkanQueue m_graphicsQueue, m_presentationQueue;
     VulkanDisplay m_display;
 
 };
