@@ -7,7 +7,7 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     bool res = true;
 
     // Window initialization
-    res = m_window.init("Vulkan", 800, 600);
+    res = m_window.init("Vulkan", m_width, m_height);
     if (res == false)
         return res;
 
@@ -34,6 +34,11 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     // Graphics queue
     m_graphicsQueue.init(m_logicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex(), 0);
     m_presentationQueue.init(m_logicalDevice.get(), m_physicalDevice.getPresentationQueueFamilyIndex(), 0);
+
+    // Swap chain
+    res = m_display.initSwapchain(m_physicalDevice.get(), m_width, m_height);
+    if (res == false)
+        return res;
 
     // Success
     return res;

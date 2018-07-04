@@ -36,6 +36,8 @@ private:
     unsigned int m_engineVersionMinor = 1;
     unsigned int m_engineVersionMajor = 0;
 
+    uint32_t m_width = 800, m_height = 600;
+
     Window m_window;
     VulkanInstance m_instance;
     VulkanPhysicalDevice m_physicalDevice;
