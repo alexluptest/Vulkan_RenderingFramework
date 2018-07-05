@@ -95,19 +95,19 @@ bool VulkanDisplay::initSwapchain(const VulkanPhysicalDevice &physicalDevice,
     if (res == false)
         return res;
 
-    VkSurfaceFormatKHR surfaceFormat = chooseSwapchainFormat();
-    VkPresentModeKHR presentMode = choosePresentMode();
-    VkExtent2D swapChainExtent = chooseSwapchainExtent(width, height);
+    m_surfaceFormat = chooseSwapchainFormat();
+    m_presentMode = choosePresentMode();
+    m_surfaceExtent = chooseSwapchainExtent(width, height);
     uint32_t imageCount = chooseSwapchainImageCount();
 
     VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
     swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     swapChainCreateInfo.surface = display.surface();
-    swapChainCreateInfo.imageFormat = surfaceFormat.format;
-    swapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
-    swapChainCreateInfo.imageExtent = swapChainExtent;
+    swapChainCreateInfo.imageFormat = m_surfaceFormat.format;
+    swapChainCreateInfo.imageColorSpace = m_surfaceFormat.colorSpace;
+    swapChainCreateInfo.imageExtent = m_surfaceExtent;
     swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    swapChainCreateInfo.presentMode = presentMode;
+    swapChainCreateInfo.presentMode = m_presentMode;
     swapChainCreateInfo.imageArrayLayers = 1;
     swapChainCreateInfo.minImageCount = imageCount;
     
@@ -133,6 +133,23 @@ bool VulkanDisplay::initSwapchain(const VulkanPhysicalDevice &physicalDevice,
     {
         std::cout << "Failed to create swap chain. \n";
         return false;
+    }
+
+    // Retrieve swap chain images
+    uint32_t swapChainImageCount = 0;
+    if (vkGetSwapchainImagesKHR(logicalDevice.get(), m_swapChain, &swapChainImageCount, nullptr) != VK_SUCCESS)
+    {
+        std::cout << "Failed to get the number of images in the swap chain.\n";
+        return false;
+    }
+    if (swapChainImageCount != 0)
+    {
+        m_swapChainImages.resize(swapChainImageCount);
+        if (vkGetSwapchainImagesKHR(logicalDevice.get(), m_swapChain, &swapChainImageCount, m_swapChainImages.data()) != VK_SUCCESS)
+        {
+            std::cout << "Failed to get the images from the swap chain.\n";
+            return false;
+        }
     }
 
     // Success

@@ -25,6 +25,9 @@ public:
 
     inline const VkSurfaceKHR surface() const { return m_surface; }
     inline uint32_t imageCount() const { return m_bufferCount; }
+    inline const VkSurfaceFormatKHR surfaceFormat() const { return m_surfaceFormat; }
+    inline const VkPresentModeKHR presentMode() const { return m_presentMode; }
+    inline const VkExtent2D surfaceExtent() const { return m_surfaceExtent; }
 
 private:
 
@@ -37,7 +40,9 @@ private:
 
     VkSurfaceFormatKHR m_surfaceFormat;
     VkPresentModeKHR m_presentMode;
+    VkExtent2D m_surfaceExtent;
     VkSwapchainKHR m_swapChain = VK_NULL_HANDLE;
+    std::vector<VkImage> m_swapChainImages;
 
     bool querySwapchainSupport(VkPhysicalDevice physicalDevice);
     VkSurfaceFormatKHR chooseSwapchainFormat();
