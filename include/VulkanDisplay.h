@@ -43,12 +43,14 @@ private:
     VkExtent2D m_surfaceExtent;
     VkSwapchainKHR m_swapChain = VK_NULL_HANDLE;
     std::vector<VkImage> m_swapChainImages;
+    std::vector<VkImageView> m_swapChainImageViews;
 
     bool querySwapchainSupport(VkPhysicalDevice physicalDevice);
     VkSurfaceFormatKHR chooseSwapchainFormat();
     VkPresentModeKHR choosePresentMode();
     VkExtent2D chooseSwapchainExtent(uint32_t width, uint32_t height);
     uint32_t chooseSwapchainImageCount();
+    void createImageViews();
 
 };
 

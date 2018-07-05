@@ -21,6 +21,12 @@ bool VulkanDisplay::createSurface(VkInstance instance, GLFWwindow *window)
 
 void VulkanDisplay::cleanup(VkDevice device, VkInstance instance)
 {
+    for (auto &imageView : m_swapChainImageViews)
+    {
+        if (imageView != VK_NULL_HANDLE)
+            vkDestroyImageView(device, imageView, nullptr);
+    }
+
     if (m_swapChain != VK_NULL_HANDLE)
         vkDestroySwapchainKHR(device, m_swapChain, nullptr);
 
@@ -148,6 +154,35 @@ bool VulkanDisplay::initSwapchain(const VulkanPhysicalDevice &physicalDevice,
         if (vkGetSwapchainImagesKHR(logicalDevice.get(), m_swapChain, &swapChainImageCount, m_swapChainImages.data()) != VK_SUCCESS)
         {
             std::cout << "Failed to get the images from the swap chain.\n";
+            return false;
+        }
+    }
+
+    // Create image views for each image retrieved from the swap chain
+    m_swapChainImageViews.resize(m_swapChainImages.size());
+    for (auto index = 0; index < m_swapChainImages.size(); ++index)
+    {
+        VkImageViewCreateInfo imageViewCreateInfo = {};
+        imageViewCreateInfo.flags = 0;
+        imageViewCreateInfo.format = m_surfaceFormat.format;
+        imageViewCreateInfo.image = m_swapChainImages[index];
+        imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        // Use image as a color target with 1 mip level and 1 layer
+        imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+        imageViewCreateInfo.subresourceRange.layerCount = 1;
+        imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+        imageViewCreateInfo.subresourceRange.levelCount = 1;
+
+        m_swapChainImageViews[index] = VK_NULL_HANDLE;
+        if (vkCreateImageView(logicalDevice.get(), &imageViewCreateInfo, nullptr, &m_swapChainImageViews[index]) != VK_SUCCESS)
+        {
+            std::cout << "Failed to create image view for swap chain image. \n";
             return false;
         }
     }
