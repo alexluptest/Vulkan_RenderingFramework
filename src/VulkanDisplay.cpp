@@ -19,8 +19,11 @@ bool VulkanDisplay::createSurface(VkInstance instance, GLFWwindow *window)
     return true;
 }
 
-void VulkanDisplay::cleanup(VkInstance instance)
+void VulkanDisplay::cleanup(VkDevice device, VkInstance instance)
 {
+    if (m_swapChain != VK_NULL_HANDLE)
+        vkDestroySwapchainKHR(device, m_swapChain, nullptr);
+
     if (m_surface != VK_NULL_HANDLE)
         vkDestroySurfaceKHR(instance, m_surface, nullptr);
 }
@@ -80,20 +83,57 @@ bool VulkanDisplay::querySwapchainSupport(VkPhysicalDevice physicalDevice)
     return true;
 }
 
-bool VulkanDisplay::initSwapchain(VkPhysicalDevice physicalDevice, uint32_t width, uint32_t height)
+bool VulkanDisplay::initSwapchain(const VulkanPhysicalDevice &physicalDevice, 
+    const VulkanLogicalDevice &logicalDevice, 
+    const VulkanDisplay &display, 
+    uint32_t width, uint32_t height)
 {
     bool res = false;
     
     // Query swap chain support
-    res = querySwapchainSupport(physicalDevice);
+    res = querySwapchainSupport(physicalDevice.get());
     if (res == false)
         return res;
 
     VkSurfaceFormatKHR surfaceFormat = chooseSwapchainFormat();
     VkPresentModeKHR presentMode = choosePresentMode();
-
-    // Choose swapchain extent
     VkExtent2D swapChainExtent = chooseSwapchainExtent(width, height);
+    uint32_t imageCount = chooseSwapchainImageCount();
+
+    VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
+    swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swapChainCreateInfo.surface = display.surface();
+    swapChainCreateInfo.imageFormat = surfaceFormat.format;
+    swapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
+    swapChainCreateInfo.imageExtent = swapChainExtent;
+    swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    swapChainCreateInfo.presentMode = presentMode;
+    swapChainCreateInfo.imageArrayLayers = 1;
+    swapChainCreateInfo.minImageCount = imageCount;
+    
+    int graphicsQueueFamilyIndex = physicalDevice.getGraphicsQueueFamilyIndex();
+    int presentQueueFamilyIndex = physicalDevice.getPresentationQueueFamilyIndex();
+    uint32_t queueFamilyIndices[] = { static_cast<uint32_t>(graphicsQueueFamilyIndex), static_cast<uint32_t>(presentQueueFamilyIndex) }; 
+    if (graphicsQueueFamilyIndex != presentQueueFamilyIndex)
+    {
+        swapChainCreateInfo.queueFamilyIndexCount = 2;
+        swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+        swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+    }
+    else
+        swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    swapChainCreateInfo.clipped = VK_TRUE;
+    swapChainCreateInfo.preTransform = m_surfaceCapabilities.currentTransform;
+    swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
+    swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+    // Create the swap chain
+    if (vkCreateSwapchainKHR(logicalDevice.get(), &swapChainCreateInfo, nullptr, &m_swapChain) != VK_SUCCESS)
+    {
+        std::cout << "Failed to create swap chain. \n";
+        return false;
+    }
 
     // Success
     return true;
@@ -169,4 +209,19 @@ VkPresentModeKHR VulkanDisplay::choosePresentMode()
     height = std::min(std::max(m_surfaceCapabilities.minImageExtent.height, height), m_surfaceCapabilities.maxImageExtent.height);
 
     return swapChainExtent;
+ }
+
+ uint32_t VulkanDisplay::chooseSwapchainImageCount()
+ {
+    if (m_bufferCount < m_surfaceCapabilities.minImageCount)
+        m_bufferCount = m_surfaceCapabilities.minImageCount;
+
+    // No limit for the swapchain image count
+    if (m_surfaceCapabilities.maxImageCount != 0)
+    {
+        if (m_bufferCount > m_surfaceCapabilities.maxImageCount)
+            m_bufferCount = m_surfaceCapabilities.maxImageCount;
+    }
+
+    return m_bufferCount;
  }

@@ -36,7 +36,7 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     m_presentationQueue.init(m_logicalDevice.get(), m_physicalDevice.getPresentationQueueFamilyIndex(), 0);
 
     // Swap chain
-    res = m_display.initSwapchain(m_physicalDevice.get(), m_width, m_height);
+    res = m_display.initSwapchain(m_physicalDevice, m_logicalDevice, m_display, m_width, m_height);
     if (res == false)
         return res;
 
@@ -52,7 +52,7 @@ void VulkanEngine::mainLoop()
 void VulkanEngine::cleanup()
 {
     // Display
-    m_display.cleanup(m_instance.get());
+    m_display.cleanup(m_logicalDevice.get(), m_instance.get());
     // Logical device
     m_logicalDevice.cleanup();
     // Instance
