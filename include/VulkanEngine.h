@@ -9,6 +9,8 @@
 #include "VulkanLogicalDevice.h"
 #include "VulkanQueue.h"
 #include "VulkanDisplay.h"
+#include "VulkanGraphicsPipeline.h"
+#include "VulkanShader.h"
 #include "Window.h"
 
 class VulkanEngine
@@ -44,7 +46,10 @@ private:
     VulkanLogicalDevice m_logicalDevice;
     VulkanQueue m_graphicsQueue, m_presentationQueue;
     VulkanDisplay m_display;
+    VulkanGraphicsPipeline m_graphicsPipeline;
 
+    // Shaders
+    VulkanShader m_testVertexShader, m_testFragmentShader;
 };
 
 #endif // VULKANENGINE_H

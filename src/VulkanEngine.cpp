@@ -7,38 +7,25 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     bool res = true;
 
     // Window initialization
-    res = m_window.init("Vulkan", m_width, m_height);
-    if (res == false)
-        return res;
-
+    if (m_window.init("Vulkan", m_width, m_height) == 0) return false;
     // Instance
-    res = m_instance.init(appName, m_engineVersionMinor, m_engineVersionMajor, appMajorVersion, appMinorVersion);
-    if (res == false) 
-        return res;
-
-    // Display
-    res = m_display.createSurface(m_instance.get(), m_window.window());
-    if (res == false)
-        return res;
-
+    if (m_instance.init(appName, m_engineVersionMinor, m_engineVersionMajor, appMajorVersion, appMinorVersion) == 0) return false;
+     // Display
+    if (m_display.createSurface(m_instance.get(), m_window.window()) == 0) return false;
     // Physical device init
-    res = m_physicalDevice.init(m_instance.get(), VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, m_display.surface());
-    if (res == false)
-        return res;
-
+    if (m_physicalDevice.init(m_instance.get(), VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, m_display.surface()) == 0) return false;
     // Logical device
-    res = m_logicalDevice.init(m_physicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex(), 1);
-    if (res == false)
-        return res;
-
+    if (m_logicalDevice.init(m_physicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex(), 1) == 0) return false;
     // Graphics queue
     m_graphicsQueue.init(m_logicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex(), 0);
     m_presentationQueue.init(m_logicalDevice.get(), m_physicalDevice.getPresentationQueueFamilyIndex(), 0);
-
     // Swap chain
-    res = m_display.initSwapchain(m_physicalDevice, m_logicalDevice, m_display, m_width, m_height);
-    if (res == false)
-        return res;
+    if (m_display.initSwapchain(m_physicalDevice, m_logicalDevice, m_display, m_width, m_height) == 0) return false;
+    // Shaders
+    if (m_testVertexShader.init(m_logicalDevice.get(), "vertexShader", VK_SHADER_STAGE_VERTEX_BIT) == 0) return false;
+    if (m_testFragmentShader.init(m_logicalDevice.get(), "fragmentShader", VK_SHADER_STAGE_FRAGMENT_BIT) == 0) return false;
+    // Graphics pipeline
+    if (m_graphicsPipeline.init(m_testVertexShader, m_testFragmentShader) == 0) return false;
 
     // Success
     return res;
@@ -51,6 +38,12 @@ void VulkanEngine::mainLoop()
 
 void VulkanEngine::cleanup()
 {
+    // Shaders
+    m_testVertexShader.cleanup(m_logicalDevice.get());
+    m_testFragmentShader.cleanup(m_logicalDevice.get());
+
+    // Graphics pipeline
+    m_graphicsPipeline.cleanup();
     // Display
     m_display.cleanup(m_logicalDevice.get(), m_instance.get());
     // Logical device
