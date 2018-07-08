@@ -22,8 +22,8 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     // Swap chain
     if (m_display.initSwapchain(m_physicalDevice, m_logicalDevice, m_display, m_width, m_height) == 0) return false;
     // Shaders
-    if (m_testVertexShader.init(m_logicalDevice.get(), "vertexShader", VK_SHADER_STAGE_VERTEX_BIT) == 0) return false;
-    if (m_testFragmentShader.init(m_logicalDevice.get(), "fragmentShader", VK_SHADER_STAGE_FRAGMENT_BIT) == 0) return false;
+    if (m_testVertexShader.init(m_logicalDevice.get(), "./shaders/binaries/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT) == 0) return false;
+    if (m_testFragmentShader.init(m_logicalDevice.get(), "./shaders/binaries/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT) == 0) return false;
     // Graphics pipeline
     if (m_graphicsPipeline.init(m_testVertexShader, m_testFragmentShader) == 0) return false;
 

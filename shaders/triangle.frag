@@ -6,5 +6,5 @@ layout(location = 0) out vec4 outputColor;
 
 void main()
 {
-    color = vec4(vertexColor, 1.0f);
+    outputColor = vec4(vertexColor, 1.0f);
 }
