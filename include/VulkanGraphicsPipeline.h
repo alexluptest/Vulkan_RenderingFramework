@@ -12,10 +12,12 @@ public:
     VulkanGraphicsPipeline() {}
     ~VulkanGraphicsPipeline() {}
 
-    bool init(const VulkanShader &vertexShader, const VulkanShader &fragmentShader);
-    void cleanup();
+    bool init(VkDevice device, uint32_t width, uint32_t height, const VulkanShader &vertexShader, const VulkanShader &fragmentShader);
+    void cleanup(VkDevice device);
 
 private:
+
+    VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 
 };
 

@@ -25,7 +25,7 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     if (m_testVertexShader.init(m_logicalDevice.get(), "./shaders/binaries/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT) == 0) return false;
     if (m_testFragmentShader.init(m_logicalDevice.get(), "./shaders/binaries/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT) == 0) return false;
     // Graphics pipeline
-    if (m_graphicsPipeline.init(m_testVertexShader, m_testFragmentShader) == 0) return false;
+    if (m_graphicsPipeline.init(m_logicalDevice.get(), m_width, m_height, m_testVertexShader, m_testFragmentShader) == 0) return false;
 
     // Success
     return res;
@@ -43,7 +43,7 @@ void VulkanEngine::cleanup()
     m_testFragmentShader.cleanup(m_logicalDevice.get());
 
     // Graphics pipeline
-    m_graphicsPipeline.cleanup();
+    m_graphicsPipeline.cleanup(m_logicalDevice.get());
     // Display
     m_display.cleanup(m_logicalDevice.get(), m_instance.get());
     // Logical device
