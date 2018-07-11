@@ -21,6 +21,9 @@ bool VulkanDisplay::createSurface(VkInstance instance, GLFWwindow *window)
 
 void VulkanDisplay::cleanup(VkDevice device, VkInstance instance)
 {
+    for (auto framebuffer : m_framebuffers)
+        vkDestroyFramebuffer(device, framebuffer, nullptr);
+
     for (auto &imageView : m_swapChainImageViews)
     {
         if (imageView != VK_NULL_HANDLE)
@@ -277,3 +280,31 @@ VkPresentModeKHR VulkanDisplay::choosePresentMode()
 
     return m_bufferCount;
  }
+
+
+bool VulkanDisplay::createFramebuffers(VkDevice device, VkRenderPass renderPass)
+{
+    m_framebuffers.resize(m_swapChainImageViews.size());
+
+    // Create a framebuffer for each swap chain image view
+    for (int i = 0; i < m_swapChainImageViews.size(); ++i)
+    {
+        VkFramebufferCreateInfo framebufferCreateInfo = {};
+        framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferCreateInfo.width = m_surfaceExtent.width;
+        framebufferCreateInfo.height = m_surfaceExtent.height;
+        framebufferCreateInfo.renderPass = renderPass;
+        framebufferCreateInfo.attachmentCount = 1;
+        framebufferCreateInfo.layers = 1;
+        framebufferCreateInfo.pAttachments = &m_swapChainImageViews[i];
+
+        if (vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &m_framebuffers[i]) != VK_SUCCESS)
+        {
+            std::cout << "Failed to create framebuffers. \n";
+            return false;
+        }
+    }
+
+    // Success
+    return true;
+}

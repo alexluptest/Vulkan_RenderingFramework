@@ -17,6 +17,7 @@ public:
     ~VulkanDisplay() {}
 
     bool createSurface(VkInstance instance, GLFWwindow *window);
+    bool createFramebuffers(VkDevice device, VkRenderPass renderPass);
     void cleanup(VkDevice device, VkInstance instance);
     bool initSwapchain(const VulkanPhysicalDevice &physicalDevice, 
         const VulkanLogicalDevice &logicalDevice, 
@@ -44,6 +45,7 @@ private:
     VkSwapchainKHR m_swapChain = VK_NULL_HANDLE;
     std::vector<VkImage> m_swapChainImages;
     std::vector<VkImageView> m_swapChainImageViews;
+    std::vector<VkFramebuffer> m_framebuffers;
 
     bool querySwapchainSupport(VkPhysicalDevice physicalDevice);
     VkSurfaceFormatKHR chooseSwapchainFormat();

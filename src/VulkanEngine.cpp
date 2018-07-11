@@ -28,6 +28,8 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     if (m_renderPass.init(m_logicalDevice.get(), m_display.surfaceFormat().format) == 0) return false;
     // Graphics pipeline
     if (m_graphicsPipeline.init(m_logicalDevice.get(), m_width, m_height, m_testVertexShader, m_testFragmentShader, m_renderPass) == 0) return false;
+    // Command pool
+    if (m_commandPool.init(m_logicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex()) == 0) return false;
 
     // Success
     return res;
@@ -43,6 +45,8 @@ void VulkanEngine::cleanup()
     // Shaders
     m_testVertexShader.cleanup(m_logicalDevice.get());
     m_testFragmentShader.cleanup(m_logicalDevice.get());
+    // Command pool
+    m_commandPool.cleanup(m_logicalDevice.get());
     // Render pass
     m_renderPass.cleanup(m_logicalDevice.get());
     // Graphics pipeline
