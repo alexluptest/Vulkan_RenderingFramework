@@ -30,6 +30,8 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     if (m_graphicsPipeline.init(m_logicalDevice.get(), m_width, m_height, m_testVertexShader, m_testFragmentShader, m_renderPass) == 0) return false;
     // Command pool
     if (m_commandPool.init(m_logicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex()) == 0) return false;
+    // Command buffers
+    if (m_commandBuffers.init(m_logicalDevice.get(), m_commandPool.get(), m_display.imageCount()) == 0) return false;
 
     // Success
     return res;

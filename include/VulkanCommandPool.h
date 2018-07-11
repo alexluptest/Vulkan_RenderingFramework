@@ -11,6 +11,8 @@ public:
     VulkanCommandPool() {}
     ~VulkanCommandPool() {}
 
+    const inline VkCommandPool get() const { return m_commandPool; }
+
     bool init(VkDevice device, int graphicsQueueFamilyIndex);
     void cleanup(VkDevice device);
 

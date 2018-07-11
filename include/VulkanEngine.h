@@ -13,6 +13,7 @@
 #include "VulkanShader.h"
 #include "VulkanRenderPass.h"
 #include "VulkanCommandPool.h"
+#include "VulkanCommandBuffers.h"
 #include "Window.h"
 
 class VulkanEngine
@@ -51,6 +52,7 @@ private:
     VulkanGraphicsPipeline m_graphicsPipeline;
     VulkanRenderPass m_renderPass;
     VulkanCommandPool m_commandPool;
+    VulkanCommandBuffers m_commandBuffers;
 
     // Shaders
     VulkanShader m_testVertexShader, m_testFragmentShader;
