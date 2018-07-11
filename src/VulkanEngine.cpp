@@ -27,7 +27,7 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     // Create a render pass
     if (m_renderPass.init(m_logicalDevice.get(), m_display.surfaceFormat().format) == 0) return false;
     // Graphics pipeline
-    if (m_graphicsPipeline.init(m_logicalDevice.get(), m_width, m_height, m_testVertexShader, m_testFragmentShader) == 0) return false;
+    if (m_graphicsPipeline.init(m_logicalDevice.get(), m_width, m_height, m_testVertexShader, m_testFragmentShader, m_renderPass) == 0) return false;
 
     // Success
     return res;

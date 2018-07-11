@@ -14,6 +14,8 @@ public:
     bool init(VkDevice device, VkFormat swapChainFormat);
     void cleanup(VkDevice device);
 
+    inline const VkRenderPass renderPass() const { return m_renderPass; }
+
 private:
 
     VkRenderPass m_renderPass = VK_NULL_HANDLE;

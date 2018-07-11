@@ -2,7 +2,10 @@
 
 #include <iostream>
 
-bool VulkanGraphicsPipeline::init(VkDevice device, uint32_t width, uint32_t height, const VulkanShader &vertexShader, const VulkanShader &fragmentShader)
+bool VulkanGraphicsPipeline::init(VkDevice device, 
+    uint32_t width, uint32_t height, 
+    const VulkanShader &vertexShader, const VulkanShader &fragmentShader,
+    const VulkanRenderPass &renderPass)
 {
     // Vertex input
     VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {};
@@ -34,6 +37,7 @@ bool VulkanGraphicsPipeline::init(VkDevice device, uint32_t width, uint32_t heig
     scissor.extent.width = width;
     scissor.extent.height = height;
     VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {};
+    viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewportStateCreateInfo.viewportCount = 1;
     viewportStateCreateInfo.pViewports = &viewport;
     viewportStateCreateInfo.scissorCount = 1;
@@ -146,12 +150,44 @@ bool VulkanGraphicsPipeline::init(VkDevice device, uint32_t width, uint32_t heig
         return false;
     }
 
+    // Graphics pipeline
+    VkPipelineShaderStageCreateInfo stages[] = { 
+        vertexShader.shaderStageInfo(),
+        fragmentShader.shaderStageInfo() 
+    };
+
+    VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
+    pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineCreateInfo.stageCount = 2;
+    pipelineCreateInfo.pStages = stages;
+    pipelineCreateInfo.pVertexInputState = &vertexInputStateCreateInfo;
+    pipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateCreateInfo;
+    pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
+    pipelineCreateInfo.pRasterizationState = &rasterizerStateCreateInfo;
+    pipelineCreateInfo.pMultisampleState = &multisampleStateCreateInfo;
+    pipelineCreateInfo.pDepthStencilState = nullptr;
+    pipelineCreateInfo.pColorBlendState = &colorBlending;
+    pipelineCreateInfo.pDynamicState = nullptr;
+    pipelineCreateInfo.layout = m_pipelineLayout;
+    pipelineCreateInfo.renderPass = renderPass.renderPass();
+    pipelineCreateInfo.subpass = 0;
+    pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+    pipelineCreateInfo.basePipelineIndex = -1;
+
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &m_graphicsPipeline) != VK_SUCCESS)
+    {
+        std::cout << "Failed to create the graphics pipeline. \n";
+        return false;
+    }
+
     // Success
     return true;
 }
     
 void VulkanGraphicsPipeline::cleanup(VkDevice device)
 {
+    if (m_graphicsPipeline != VK_NULL_HANDLE)
+        vkDestroyPipeline(device, m_graphicsPipeline, nullptr);
     if (m_pipelineLayout != VK_NULL_HANDLE)
         vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
 }
