@@ -11,6 +11,7 @@
 #include "VulkanDisplay.h"
 #include "VulkanGraphicsPipeline.h"
 #include "VulkanShader.h"
+#include "VulkanRenderPass.h"
 #include "Window.h"
 
 class VulkanEngine
@@ -47,6 +48,7 @@ private:
     VulkanQueue m_graphicsQueue, m_presentationQueue;
     VulkanDisplay m_display;
     VulkanGraphicsPipeline m_graphicsPipeline;
+    VulkanRenderPass m_renderPass;
 
     // Shaders
     VulkanShader m_testVertexShader, m_testFragmentShader;
