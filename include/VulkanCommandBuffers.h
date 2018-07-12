@@ -15,6 +15,8 @@ public:
     ~VulkanCommandBuffers() {}
 
     bool init(VkDevice device, VkCommandPool commandPool, uint32_t bufferCount);
+    bool beginCommandBuffer(uint32_t commandBufferIndex);
+    bool endCommandBuffer(uint32_t commandBufferIndex);
 
 private:
 

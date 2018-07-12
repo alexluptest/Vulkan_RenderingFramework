@@ -13,6 +13,8 @@ public:
     VulkanGraphicsPipeline() {}
     ~VulkanGraphicsPipeline() {}
 
+    inline const VkPipeline get() const { return m_graphicsPipeline; }
+
     bool init(VkDevice device, 
         uint32_t width, uint32_t height, 
         const VulkanShader &vertexShader, const VulkanShader &fragmentShader,

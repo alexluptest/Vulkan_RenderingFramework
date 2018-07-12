@@ -62,3 +62,35 @@ void VulkanEngine::cleanup()
     // Window
     m_window.cleanup();
 }
+
+void VulkanEngine::beginRenderPass(VkCommandBuffer currentCommandBuffer, VkFramebuffer currentFramebuffer)
+{
+    VkRenderPassBeginInfo renderPassBeginInfo = {};
+    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    // Render pass
+    renderPassBeginInfo.renderPass = m_renderPass.get();
+    // Color attachment
+    renderPassBeginInfo.framebuffer = currentFramebuffer;
+    // Size of the render area
+    renderPassBeginInfo.renderArea.extent = m_display.surfaceExtent();
+    renderPassBeginInfo.renderArea.offset = { 0, 0 };
+    // Defines the clear value used for the VK_ATTACHMENT_LOAD_OP_CLEAR operation
+    renderPassBeginInfo.pClearValues = &m_clearColor;
+    renderPassBeginInfo.clearValueCount = 1;
+
+    // Begin render pass
+    vkCmdBeginRenderPass(currentCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void VulkanEngine::endRenderPass(VkCommandBuffer currentCommandbuffer)
+{
+    vkCmdEndRenderPass(currentCommandbuffer);
+}
+
+void VulkanEngine::beginDraw(VkCommandBuffer currentCommandbuffer, VkPipeline pipeline)
+{
+    // Bind the pipline
+    vkCmdBindPipeline(currentCommandbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    // Send the draw command
+    vkCmdDraw(currentCommandbuffer, 3, 1, 0, 0);
+}

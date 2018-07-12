@@ -169,7 +169,7 @@ bool VulkanGraphicsPipeline::init(VkDevice device,
     pipelineCreateInfo.pColorBlendState = &colorBlending;
     pipelineCreateInfo.pDynamicState = nullptr;
     pipelineCreateInfo.layout = m_pipelineLayout;
-    pipelineCreateInfo.renderPass = renderPass.renderPass();
+    pipelineCreateInfo.renderPass = renderPass.get();
     pipelineCreateInfo.subpass = 0;
     pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineCreateInfo.basePipelineIndex = -1;

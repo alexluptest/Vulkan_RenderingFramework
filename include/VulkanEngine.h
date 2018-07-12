@@ -38,10 +38,16 @@ private:
 
     VulkanEngine() {}
 
+    void beginRenderPass(VkCommandBuffer currentCommandBuffer, VkFramebuffer currentFramebuffer);
+    void endRenderPass(VkCommandBuffer currentCommandbuffer);
+    void beginDraw(VkCommandBuffer currentCommandbuffer, VkPipeline pipeline);
+
     unsigned int m_engineVersionMinor = 1;
     unsigned int m_engineVersionMajor = 0;
 
     uint32_t m_width = 800, m_height = 600;
+
+    VkClearValue m_clearColor = { 0.0f, 0.0f, 0.0f, 1.0f }; 
 
     Window m_window;
     VulkanInstance m_instance;
