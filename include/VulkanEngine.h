@@ -40,7 +40,9 @@ private:
 
     void beginRenderPass(VkCommandBuffer currentCommandBuffer, VkFramebuffer currentFramebuffer);
     void endRenderPass(VkCommandBuffer currentCommandbuffer);
-    void beginDraw(VkCommandBuffer currentCommandbuffer, VkPipeline pipeline);
+    void draw(VkCommandBuffer currentCommandbuffer, VkPipeline pipeline);
+    void render();
+    bool setupCommandBuffers();
 
     unsigned int m_engineVersionMinor = 1;
     unsigned int m_engineVersionMajor = 0;
@@ -59,6 +61,9 @@ private:
     VulkanRenderPass m_renderPass;
     VulkanCommandPool m_commandPool;
     VulkanCommandBuffers m_commandBuffers;
+
+    // Synchronization
+    VulkanSynchronizationObject m_swapChainSync;
 
     // Shaders
     VulkanShader m_testVertexShader, m_testFragmentShader;

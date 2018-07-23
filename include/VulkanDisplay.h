@@ -20,15 +20,16 @@ public:
     bool createFramebuffers(VkDevice device, VkRenderPass renderPass);
     void cleanup(VkDevice device, VkInstance instance);
     bool initSwapchain(const VulkanPhysicalDevice &physicalDevice, 
-        const VulkanLogicalDevice &logicalDevice, 
-        const VulkanDisplay &display, 
+        const VulkanLogicalDevice &logicalDevice,
         uint32_t width, uint32_t height);
 
+    inline const VkSwapchainKHR swapChain() const { return m_swapChain; }
     inline const VkSurfaceKHR surface() const { return m_surface; }
     inline uint32_t imageCount() const { return m_bufferCount; }
     inline const VkSurfaceFormatKHR surfaceFormat() const { return m_surfaceFormat; }
     inline const VkPresentModeKHR presentMode() const { return m_presentMode; }
     inline const VkExtent2D surfaceExtent() const { return m_surfaceExtent; }
+    inline const VkFramebuffer framebuffer(uint32_t framebufferIndex) const { return m_framebuffers[framebufferIndex]; }
 
 private:
 

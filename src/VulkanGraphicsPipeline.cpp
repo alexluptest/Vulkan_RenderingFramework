@@ -167,7 +167,7 @@ bool VulkanGraphicsPipeline::init(VkDevice device,
     pipelineCreateInfo.pMultisampleState = &multisampleStateCreateInfo;
     pipelineCreateInfo.pDepthStencilState = nullptr;
     pipelineCreateInfo.pColorBlendState = &colorBlending;
-    pipelineCreateInfo.pDynamicState = nullptr;
+    pipelineCreateInfo.pDynamicState = &dynamicState;
     pipelineCreateInfo.layout = m_pipelineLayout;
     pipelineCreateInfo.renderPass = renderPass.get();
     pipelineCreateInfo.subpass = 0;

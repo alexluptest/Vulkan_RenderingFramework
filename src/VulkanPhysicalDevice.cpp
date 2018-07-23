@@ -72,7 +72,7 @@ bool VulkanPhysicalDevice::init(VkInstance instance,
                     std::cout << "Failed to check if the current device has presentation support for the current queue family. \n";
                 if (presentationSupport)
                 {
-                    // We found a queue family that has presentation suppor for the current device so we can stop
+                    // We found a queue family that has presentation support for the current device so we can stop
                     currenDeviceRank.physicalDevice = currentDevice;
                     physicalDeviceRanks.push_back(currenDeviceRank);
                     break;

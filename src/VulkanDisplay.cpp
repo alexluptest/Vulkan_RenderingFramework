@@ -93,8 +93,7 @@ bool VulkanDisplay::querySwapchainSupport(VkPhysicalDevice physicalDevice)
 }
 
 bool VulkanDisplay::initSwapchain(const VulkanPhysicalDevice &physicalDevice, 
-    const VulkanLogicalDevice &logicalDevice, 
-    const VulkanDisplay &display, 
+    const VulkanLogicalDevice &logicalDevice,
     uint32_t width, uint32_t height)
 {
     bool res = false;
@@ -111,7 +110,7 @@ bool VulkanDisplay::initSwapchain(const VulkanPhysicalDevice &physicalDevice,
 
     VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
     swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapChainCreateInfo.surface = display.surface();
+    swapChainCreateInfo.surface = m_surface;
     swapChainCreateInfo.imageFormat = m_surfaceFormat.format;
     swapChainCreateInfo.imageColorSpace = m_surfaceFormat.colorSpace;
     swapChainCreateInfo.imageExtent = m_surfaceExtent;

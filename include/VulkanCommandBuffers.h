@@ -18,6 +18,8 @@ public:
     bool beginCommandBuffer(uint32_t commandBufferIndex);
     bool endCommandBuffer(uint32_t commandBufferIndex);
 
+    const inline std::vector<VkCommandBuffer> &get() const { return m_commandBuffers; }
+
 private:
 
     std::vector<VkCommandBuffer> m_commandBuffers;

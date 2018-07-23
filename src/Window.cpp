@@ -32,14 +32,6 @@ void Window::cleanup()
     glfwTerminate();
 }
 
-void Window::run()
-{
-    while (!glfwWindowShouldClose(m_window))
-    {
-        glfwPollEvents();
-    }
-}
-
 void Window::error_callback(int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);

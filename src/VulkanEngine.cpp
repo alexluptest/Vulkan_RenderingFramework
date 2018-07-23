@@ -1,6 +1,7 @@
 #include "VulkanEngine.h"
 
 #include <string>
+#include <limits>
 
 bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorVersion, unsigned int appMinorVersion)
 {
@@ -20,26 +21,103 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     m_graphicsQueue.init(m_logicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex(), 0);
     m_presentationQueue.init(m_logicalDevice.get(), m_physicalDevice.getPresentationQueueFamilyIndex(), 0);
     // Swap chain
-    if (m_display.initSwapchain(m_physicalDevice, m_logicalDevice, m_display, m_width, m_height) == 0) return false;
+    if (m_display.initSwapchain(m_physicalDevice, m_logicalDevice, m_width, m_height) == 0) return false;
     // Shaders
     if (m_testVertexShader.init(m_logicalDevice.get(), "./shaders/binaries/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT) == 0) return false;
     if (m_testFragmentShader.init(m_logicalDevice.get(), "./shaders/binaries/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT) == 0) return false;
     // Create a render pass
     if (m_renderPass.init(m_logicalDevice.get(), m_display.surfaceFormat().format) == 0) return false;
+    // Create framebuffers for each image view corresponding to each image in the swap chain
+    if (m_display.createFramebuffers(m_logicalDevice.get(), m_renderPass.get()) == 0) return false;
     // Graphics pipeline
     if (m_graphicsPipeline.init(m_logicalDevice.get(), m_width, m_height, m_testVertexShader, m_testFragmentShader, m_renderPass) == 0) return false;
     // Command pool
     if (m_commandPool.init(m_logicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex()) == 0) return false;
     // Command buffers
     if (m_commandBuffers.init(m_logicalDevice.get(), m_commandPool.get(), m_display.imageCount()) == 0) return false;
+    // Sync objects
+    if (m_swapChainSync.init(m_logicalDevice.get(), 1, 1) == 0) return false;  
+    // Setup command buffers
+    if (setupCommandBuffers() == 0) return false;
 
     // Success
     return res;
 }
 
+void VulkanEngine::render()
+{
+    // Acquire image from the swap chain - wait for the image to be released by the presentation
+    uint32_t availableImageIndex;
+    if (vkAcquireNextImageKHR(m_logicalDevice.get(), 
+        m_display.swapChain(), 
+        std::numeric_limits<uint64_t>::max(),
+        m_swapChainSync.waitForObjects[0], // signal this semaphore when the image is acquired
+        VK_NULL_HANDLE, 
+        &availableImageIndex) != VK_SUCCESS)
+    {
+        std::cout << "Failed to acquire swap chain image.\n";    
+    }
+
+    // Prepare a list of command buffers to be executed - we should submit just the command buffer
+    // that binds the swap chain image that we just acquired. Execute command buffer 
+    // with the current image as attachment - wait for the acquire image
+    m_graphicsQueue.submitCommandBuffers(m_swapChainSync, { m_commandBuffers.get()[availableImageIndex] });
+
+    // Do the presentation
+    VkPresentInfoKHR presentInfo = {};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    // Specifies which semaphore to wait for (which is signalled when the command buffer is finished executing)
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = &m_swapChainSync.signalObjects[0];
+    // Specifies the swap chain to present images to and the image index for each one
+    presentInfo.swapchainCount = 1;
+    VkSwapchainKHR swapChains[] = { m_display.swapChain() };
+    presentInfo.pSwapchains = swapChains;
+    presentInfo.pImageIndices = &availableImageIndex;
+    presentInfo.pResults = nullptr;
+
+    // Send presentation commands to the presentation queue
+    if (vkQueuePresentKHR(m_presentationQueue.graphicsQueueHandle(), &presentInfo) != VK_SUCCESS)
+    {
+        std::cout << "Failed to send the presentation request.\n";
+    }
+}
+
+bool VulkanEngine::setupCommandBuffers()
+{
+    auto &commandBuffers = m_commandBuffers.get();
+
+    for (auto &currentCommandBuffer : commandBuffers)
+    {
+        int currentCommandBufferIndex = &currentCommandBuffer - commandBuffers.data();
+
+        // Begin current command buffer recording
+        if (m_commandBuffers.beginCommandBuffer(currentCommandBufferIndex) == false)
+            return false;
+
+        beginRenderPass(currentCommandBuffer, m_display.framebuffer(currentCommandBufferIndex));
+        draw(currentCommandBuffer, m_graphicsPipeline.get());
+        endRenderPass(currentCommandBuffer);
+
+        // End current command buffer recording
+        if (m_commandBuffers.endCommandBuffer(currentCommandBufferIndex) == false)
+            return false;
+    }
+
+    // Success
+    return true;
+}
+
 void VulkanEngine::mainLoop()
 {
-    m_window.run();
+    while (!glfwWindowShouldClose(m_window.window()))
+    {
+        glfwPollEvents();
+        render();
+    }
+
+    // Wait for the queue to finish executing commands before going further
+    vkDeviceWaitIdle(m_logicalDevice.get());
 }
 
 void VulkanEngine::cleanup()
@@ -47,6 +125,8 @@ void VulkanEngine::cleanup()
     // Shaders
     m_testVertexShader.cleanup(m_logicalDevice.get());
     m_testFragmentShader.cleanup(m_logicalDevice.get());
+    // Semaphores
+    m_swapChainSync.cleanup(m_logicalDevice.get());
     // Command pool
     m_commandPool.cleanup(m_logicalDevice.get());
     // Render pass
@@ -87,8 +167,18 @@ void VulkanEngine::endRenderPass(VkCommandBuffer currentCommandbuffer)
     vkCmdEndRenderPass(currentCommandbuffer);
 }
 
-void VulkanEngine::beginDraw(VkCommandBuffer currentCommandbuffer, VkPipeline pipeline)
+void VulkanEngine::draw(VkCommandBuffer currentCommandbuffer, VkPipeline pipeline)
 {
+    // Set dynamic viewport
+    VkViewport viewport = {};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = m_width;
+    viewport.height = m_height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    vkCmdSetViewport(currentCommandbuffer, 0, 1, &viewport);
     // Bind the pipline
     vkCmdBindPipeline(currentCommandbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     // Send the draw command

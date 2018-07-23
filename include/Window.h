@@ -12,7 +12,6 @@ public:
 
     bool init(const std::string &title, uint16_t width, uint16_t height);
     void cleanup();
-    void run();
 
     inline GLFWwindow *window() const { return m_window; }
 
