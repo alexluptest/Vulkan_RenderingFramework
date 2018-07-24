@@ -47,6 +47,9 @@ private:
     unsigned int m_engineVersionMinor = 1;
     unsigned int m_engineVersionMajor = 0;
 
+    uint32_t m_maxFramesInFlight = 2;
+    uint32_t m_currentFrameIndex = 0;
+
     uint32_t m_width = 800, m_height = 600;
 
     VkClearValue m_clearColor = { 0.0f, 0.0f, 0.0f, 1.0f }; 

@@ -10,8 +10,9 @@ struct VulkanSynchronizationObject
 {
     std::vector<VkSemaphore> waitForObjects;
     std::vector<VkSemaphore> signalObjects;
+    std::vector<VkFence> fences;
 
-    bool init(VkDevice device, uint32_t waitForObjectCount, uint32_t signalObjectCount);
+    bool init(VkDevice device, uint32_t waitForObjectCount, uint32_t signalObjectCount, uint32_t fencesCount);
     void cleanup(VkDevice device);
 };
 
@@ -24,7 +25,7 @@ public:
     ~VulkanQueue() {}
 
     void init(VkDevice logicalDevice, uint32_t queueFamilyIndex, uint32_t queueIndex);
-    bool submitCommandBuffers(const VulkanSynchronizationObject &syncObject, const std::vector<VkCommandBuffer> &commandBuffers);
+    bool submitCommandBuffers(const VulkanSynchronizationObject &syncObject, uint32_t currentFrameIndex, const std::vector<VkCommandBuffer> &commandBuffers);
 
     const inline VkQueue &graphicsQueueHandle() const { return m_queueHandle; }
 

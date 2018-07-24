@@ -36,7 +36,7 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     // Command buffers
     if (m_commandBuffers.init(m_logicalDevice.get(), m_commandPool.get(), m_display.imageCount()) == 0) return false;
     // Sync objects
-    if (m_swapChainSync.init(m_logicalDevice.get(), 1, 1) == 0) return false;  
+    if (m_swapChainSync.init(m_logicalDevice.get(), m_maxFramesInFlight, m_maxFramesInFlight, m_maxFramesInFlight) == 0) return false;  
     // Setup command buffers
     if (setupCommandBuffers() == 0) return false;
 
@@ -46,12 +46,18 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
 
 void VulkanEngine::render()
 {
+    // Wait for the current fence frame to be signalled
+    if (vkWaitForFences(m_logicalDevice.get(), 1, &m_swapChainSync.fences[m_currentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max()) != VK_SUCCESS)
+        std::cout << "Failed to wait for the current frame fence object to be signalled. \n";
+    if (vkResetFences(m_logicalDevice.get(), 1, &m_swapChainSync.fences[m_currentFrameIndex]) != VK_SUCCESS)
+        std::cout << "Failed to reset the current frame fence object. \n";
+
     // Acquire image from the swap chain - wait for the image to be released by the presentation
     uint32_t availableImageIndex;
     if (vkAcquireNextImageKHR(m_logicalDevice.get(), 
         m_display.swapChain(), 
         std::numeric_limits<uint64_t>::max(),
-        m_swapChainSync.waitForObjects[0], // signal this semaphore when the image is acquired
+        m_swapChainSync.waitForObjects[m_currentFrameIndex], // signal this semaphore when the image is acquired
         VK_NULL_HANDLE, 
         &availableImageIndex) != VK_SUCCESS)
     {
@@ -61,14 +67,14 @@ void VulkanEngine::render()
     // Prepare a list of command buffers to be executed - we should submit just the command buffer
     // that binds the swap chain image that we just acquired. Execute command buffer 
     // with the current image as attachment - wait for the acquire image
-    m_graphicsQueue.submitCommandBuffers(m_swapChainSync, { m_commandBuffers.get()[availableImageIndex] });
+    m_graphicsQueue.submitCommandBuffers(m_swapChainSync, m_currentFrameIndex, { m_commandBuffers.get()[availableImageIndex] });
 
     // Do the presentation
     VkPresentInfoKHR presentInfo = {};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     // Specifies which semaphore to wait for (which is signalled when the command buffer is finished executing)
     presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = &m_swapChainSync.signalObjects[0];
+    presentInfo.pWaitSemaphores = &m_swapChainSync.signalObjects[m_currentFrameIndex];
     // Specifies the swap chain to present images to and the image index for each one
     presentInfo.swapchainCount = 1;
     VkSwapchainKHR swapChains[] = { m_display.swapChain() };
@@ -81,6 +87,9 @@ void VulkanEngine::render()
     {
         std::cout << "Failed to send the presentation request.\n";
     }
+
+    // Update current frame index
+    m_currentFrameIndex = (m_currentFrameIndex + 1) % m_maxFramesInFlight;
 }
 
 bool VulkanEngine::setupCommandBuffers()
