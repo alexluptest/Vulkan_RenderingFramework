@@ -4,6 +4,8 @@
 #include "VulkanHelper.h"
 #include "VulkanShader.h"
 #include "VulkanRenderPass.h"
+#include "VertexFormat.h"
+#include "VulkanBuffer.h"
 
 class VulkanGraphicsPipeline
 {
@@ -25,7 +27,6 @@ private:
 
     VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
     VkPipeline m_graphicsPipeline = VK_NULL_HANDLE;
-
 };
 
 #endif // VULKANGRAPHICSPIPELINE_H

@@ -14,6 +14,7 @@
 #include "VulkanRenderPass.h"
 #include "VulkanCommandPool.h"
 #include "VulkanCommandBuffers.h"
+#include "VulkanBuffer.h"
 #include "Window.h"
 
 class VulkanEngine
@@ -64,6 +65,7 @@ private:
     VulkanRenderPass m_renderPass;
     VulkanCommandPool m_commandPool;
     VulkanCommandBuffers m_commandBuffers;
+    VulkanBuffer m_triangleVertexBuffer;
 
     // Synchronization
     VulkanSynchronizationObject m_swapChainSync;

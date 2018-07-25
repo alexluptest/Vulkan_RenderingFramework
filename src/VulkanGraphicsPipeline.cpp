@@ -8,15 +8,18 @@ bool VulkanGraphicsPipeline::init(VkDevice device,
     const VulkanRenderPass &renderPass)
 {
     // Vertex input
+    auto vertexAttributes = VertexPC::getAttributeDescriptions();
+    auto vertexBindings = VertexPC::getBindingDescription();
+
     VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {};
     vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     // Bindings - spacing between data and whether the data is per vertex or per instance
-    vertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
-    vertexInputStateCreateInfo.pVertexBindingDescriptions = nullptr;
+    vertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
+    vertexInputStateCreateInfo.pVertexBindingDescriptions = &vertexBindings;
     // Attrib description - types of attributes passed to the vertex shader,which
     // binding to load them from and at which offset
-    vertexInputStateCreateInfo.vertexAttributeDescriptionCount = 0;
-    vertexInputStateCreateInfo.pVertexAttributeDescriptions = nullptr;
+    vertexInputStateCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttributes.size());
+    vertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexAttributes.data();
 
     // Input assembly
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {};

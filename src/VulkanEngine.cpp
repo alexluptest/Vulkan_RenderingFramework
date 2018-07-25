@@ -37,6 +37,15 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     if (m_commandBuffers.init(m_logicalDevice.get(), m_commandPool.get(), m_display.imageCount()) == 0) return false;
     // Sync objects
     if (m_swapChainSync.init(m_logicalDevice.get(), m_maxFramesInFlight, m_maxFramesInFlight, m_maxFramesInFlight) == 0) return false;  
+    // Triangle vertex buffer setup
+    std::vector<VertexPC> vertices = {
+        {{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    };
+    // Init vertex buffer
+    if (m_triangleVertexBuffer.init(m_physicalDevice.get(), m_logicalDevice.get(), sizeof(vertices[0]) * vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) == 0) return false;
+    if (m_triangleVertexBuffer.setData(m_logicalDevice.get(), reinterpret_cast<void*>(vertices.data())) == 0) return false;
     // Setup command buffers
     if (setupCommandBuffers() == 0) return false;
 
@@ -144,6 +153,8 @@ void VulkanEngine::cleanup()
     m_graphicsPipeline.cleanup(m_logicalDevice.get());
     // Display
     m_display.cleanup(m_logicalDevice.get(), m_instance.get());
+    // Buffers
+    m_triangleVertexBuffer.cleanup(m_logicalDevice.get());
     // Logical device
     m_logicalDevice.cleanup();
     // Instance
@@ -190,6 +201,10 @@ void VulkanEngine::draw(VkCommandBuffer currentCommandbuffer, VkPipeline pipelin
     vkCmdSetViewport(currentCommandbuffer, 0, 1, &viewport);
     // Bind the pipline
     vkCmdBindPipeline(currentCommandbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    // Bind the triangle vertex buffer
+    VkBuffer vertexBuffers[] = { m_triangleVertexBuffer.get() };
+    VkDeviceSize offsets[] = { 0 };
+    vkCmdBindVertexBuffers(currentCommandbuffer, 0, 1, vertexBuffers, offsets);
     // Send the draw command
     vkCmdDraw(currentCommandbuffer, 3, 1, 0, 0);
 }
