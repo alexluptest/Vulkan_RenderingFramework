@@ -6,14 +6,18 @@
 #include <VulkanCommandBuffers.h>
 
 bool VulkanBuffer::init(const VulkanPhysicalDevice &physicalDevice, 
-    VkDevice logicalDevice, 
-    size_t bufferSize, 
+    VkDevice logicalDevice,
+    size_t elementSize,
+    size_t elementCount,
     VkBufferUsageFlags bufferUsage, 
-    VkMemoryPropertyFlags memoryPropertyFlags,
     void *data,
     const VulkanQueue &queue)
 {
-    assert(data != nullptr && "Invalid data to set in the buffer");
+    assert(data != nullptr && "Invalid data to set in the buffer.\n");
+    assert(elementSize != 0 && "Invalid element size.\n");
+    const size_t bufferSize = elementSize * elementCount;
+    m_elementCount = elementCount;
+    m_elementSize = elementSize;
 
     // Create staging buffer
     if (createBuffer(physicalDevice.get(), 
@@ -33,7 +37,7 @@ bool VulkanBuffer::init(const VulkanPhysicalDevice &physicalDevice,
     if (createBuffer(physicalDevice.get(), 
         logicalDevice,
         bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | bufferUsage,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         m_buffer,
         m_bufferMemory) == 0)

@@ -65,7 +65,8 @@ private:
     VulkanRenderPass m_renderPass;
     VulkanCommandPool m_commandPool;
     VulkanCommandBuffers m_commandBuffers;
-    VulkanBuffer m_triangleVertexBuffer;
+    VulkanBuffer m_quadVertexBuffer;
+    VulkanBuffer m_quadIndexBuffer;
 
     // Synchronization
     VulkanSynchronizationObject m_swapChainSync;

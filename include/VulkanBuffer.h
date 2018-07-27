@@ -14,15 +14,17 @@ public:
     ~VulkanBuffer() {}
 
     bool init(const VulkanPhysicalDevice &physicalDevice, 
-        VkDevice logicalDevice, 
-        size_t bufferSize, 
+        VkDevice logicalDevice,
+        size_t elementSize,
+        size_t elementCount,
         VkBufferUsageFlags bufferUsage, 
-        VkMemoryPropertyFlags memoryPropertyFlags,
         void *data,
         const VulkanQueue &queue);
     void cleanup(VkDevice device);
 
     const inline VkBuffer get() const { return m_buffer; }
+    const inline uint32_t elementSize() const { return m_elementSize; }
+    const inline uint32_t elementCount() const { return m_elementCount; }
 
 private:
 
@@ -32,6 +34,8 @@ private:
     VkBuffer m_stagingBuffer = VK_NULL_HANDLE;
     VkDeviceMemory m_stagingBufferMem = VK_NULL_HANDLE;
 
+    uint32_t m_elementSize = 0;
+    uint32_t m_elementCount = 0;
     VkDeviceSize m_bufferSize = 0;
 
     int findMemoryInfo(VkPhysicalDevice physicalDevice, uint32_t memoryType, VkMemoryPropertyFlags properties);

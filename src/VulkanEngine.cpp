@@ -39,18 +39,33 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     if (m_swapChainSync.init(m_logicalDevice.get(), m_maxFramesInFlight, m_maxFramesInFlight, m_maxFramesInFlight) == 0) return false;  
     // Triangle vertex buffer setup
     std::vector<VertexPC> vertices = {
-        {{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
     };
+
+    std::vector<uint16_t> indices = {
+        0, 1, 2, 2, 3, 0
+    };
+
     // Init vertex buffer
-    if (m_triangleVertexBuffer.init(m_physicalDevice, 
+    if (m_quadVertexBuffer.init(m_physicalDevice, 
             m_logicalDevice.get(), 
-            sizeof(vertices[0]) * vertices.size(), 
+            sizeof(vertices[0]),
+            vertices.size(),
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             reinterpret_cast<void*>(vertices.data()),
             m_graphicsQueue) == 0) return false;
+    // Init index buffer
+    if (m_quadIndexBuffer.init(m_physicalDevice,
+            m_logicalDevice.get(),
+            sizeof(indices[0]),
+            indices.size(),
+            VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+            reinterpret_cast<void*>(indices.data()),
+            m_graphicsQueue) == 0) return false;
+
     // Setup command buffers
     if (setupCommandBuffers() == 0) return false;
 
@@ -159,7 +174,8 @@ void VulkanEngine::cleanup()
     // Display
     m_display.cleanup(m_logicalDevice.get(), m_instance.get());
     // Buffers
-    m_triangleVertexBuffer.cleanup(m_logicalDevice.get());
+    m_quadVertexBuffer.cleanup(m_logicalDevice.get());
+    m_quadIndexBuffer.cleanup(m_logicalDevice.get());
     // Logical device
     m_logicalDevice.cleanup();
     // Instance
@@ -206,10 +222,12 @@ void VulkanEngine::draw(VkCommandBuffer currentCommandbuffer, VkPipeline pipelin
     vkCmdSetViewport(currentCommandbuffer, 0, 1, &viewport);
     // Bind the pipline
     vkCmdBindPipeline(currentCommandbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    // Bind the triangle vertex buffer
-    VkBuffer vertexBuffers[] = { m_triangleVertexBuffer.get() };
+    // Bind the quad vertex buffer
+    VkBuffer vertexBuffers[] = { m_quadVertexBuffer.get() };
     VkDeviceSize offsets[] = { 0 };
     vkCmdBindVertexBuffers(currentCommandbuffer, 0, 1, vertexBuffers, offsets);
+    // Bind the quad index buffer
+    vkCmdBindIndexBuffer(currentCommandbuffer, m_quadIndexBuffer.get(), 0, VK_INDEX_TYPE_UINT16);
     // Send the draw command
-    vkCmdDraw(currentCommandbuffer, 3, 1, 0, 0);
+    vkCmdDrawIndexed(currentCommandbuffer, m_quadIndexBuffer.elementCount(), 1, 0, 0, 0);
 }
