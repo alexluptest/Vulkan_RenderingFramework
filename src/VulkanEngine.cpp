@@ -44,8 +44,13 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
         {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
     };
     // Init vertex buffer
-    if (m_triangleVertexBuffer.init(m_physicalDevice.get(), m_logicalDevice.get(), sizeof(vertices[0]) * vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) == 0) return false;
-    if (m_triangleVertexBuffer.setData(m_logicalDevice.get(), reinterpret_cast<void*>(vertices.data())) == 0) return false;
+    if (m_triangleVertexBuffer.init(m_physicalDevice, 
+            m_logicalDevice.get(), 
+            sizeof(vertices[0]) * vertices.size(), 
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            reinterpret_cast<void*>(vertices.data()),
+            m_graphicsQueue) == 0) return false;
     // Setup command buffers
     if (setupCommandBuffers() == 0) return false;
 
@@ -92,7 +97,7 @@ void VulkanEngine::render()
     presentInfo.pResults = nullptr;
 
     // Send presentation commands to the presentation queue
-    if (vkQueuePresentKHR(m_presentationQueue.graphicsQueueHandle(), &presentInfo) != VK_SUCCESS)
+    if (vkQueuePresentKHR(m_presentationQueue.queueHandle(), &presentInfo) != VK_SUCCESS)
     {
         std::cout << "Failed to send the presentation request.\n";
     }

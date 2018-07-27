@@ -26,7 +26,7 @@ bool VulkanCommandBuffers::init(VkDevice device, VkCommandPool storageCommandPoo
     return true;
 }
 
-bool VulkanCommandBuffers::beginCommandBuffer(uint32_t commandBufferIndex)
+bool VulkanCommandBuffers::beginCommandBuffer(uint32_t commandBufferIndex, VkCommandBufferUsageFlags flags)
 {
     assert(commandBufferIndex < m_commandBuffers.size() && "Invalid command buffer index to start.\n");
 

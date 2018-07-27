@@ -25,13 +25,15 @@ public:
     ~VulkanQueue() {}
 
     void init(VkDevice logicalDevice, uint32_t queueFamilyIndex, uint32_t queueIndex);
-    bool submitCommandBuffers(const VulkanSynchronizationObject &syncObject, uint32_t currentFrameIndex, const std::vector<VkCommandBuffer> &commandBuffers);
+    bool submitCommandBuffers(VkDevice logicalDevice, const std::vector<VkCommandBuffer> &commandBuffers) const;
+    bool submitCommandBuffers(const VulkanSynchronizationObject &syncObject, uint32_t currentFrameIndex, const std::vector<VkCommandBuffer> &commandBuffers) const;
 
-    const inline VkQueue &graphicsQueueHandle() const { return m_queueHandle; }
+    const inline VkQueue &queueHandle() const { return m_queueHandle; }
 
 private:
 
     VkQueue m_queueHandle;
+    VkDevice *m_device = nullptr;
 
 };
 

@@ -13,7 +13,7 @@ public:
 
     const inline VkCommandPool get() const { return m_commandPool; }
 
-    bool init(VkDevice device, int graphicsQueueFamilyIndex);
+    bool init(VkDevice device, int graphicsQueueFamilyIndex, VkCommandPoolCreateFlags flags = 0);
     void cleanup(VkDevice device);
 
 private:

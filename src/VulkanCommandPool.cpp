@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <iostream>
 
-bool VulkanCommandPool::init(VkDevice device, int queueFamilyIndex)
+bool VulkanCommandPool::init(VkDevice device, int queueFamilyIndex, VkCommandPoolCreateFlags flags)
 {
     // Commands created from this command pool can be submitted only to 
     // a single type of queue (graphics, compute, etc)
@@ -12,7 +12,7 @@ bool VulkanCommandPool::init(VkDevice device, int queueFamilyIndex)
     VkCommandPoolCreateInfo commandPoolCreateInfo = {};
     commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
-    commandPoolCreateInfo.flags = 0;
+    commandPoolCreateInfo.flags = flags;
 
     // Create command pool
     if (vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &m_commandPool) != VK_SUCCESS)

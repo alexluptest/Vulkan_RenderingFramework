@@ -15,7 +15,7 @@ public:
     ~VulkanCommandBuffers() {}
 
     bool init(VkDevice device, VkCommandPool commandPool, uint32_t bufferCount);
-    bool beginCommandBuffer(uint32_t commandBufferIndex);
+    bool beginCommandBuffer(uint32_t commandBufferIndex, VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
     bool endCommandBuffer(uint32_t commandBufferIndex);
 
     const inline std::vector<VkCommandBuffer> &get() const { return m_commandBuffers; }

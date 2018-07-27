@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <vector>
 #include <iostream>
+#include <limits>
 
 bool VulkanSynchronizationObject::init(VkDevice device, uint32_t waitForObjectCount, uint32_t signalObjectCount, uint32_t fencesCount)
 {
@@ -85,10 +86,59 @@ void VulkanQueue::init(VkDevice logicalDevice, uint32_t queueFamilyIndex, uint32
     assert(queueFamilyIndex != -1 && "\nInvalid queue family index.");
     assert(queueFamilyIndex >= 0 && "\nInvalid queue index.");
 
+    m_device = &logicalDevice;
     vkGetDeviceQueue(logicalDevice, queueFamilyIndex, queueIndex, &m_queueHandle);
 }
 
-bool VulkanQueue::submitCommandBuffers(const VulkanSynchronizationObject &syncObject, uint32_t currentFrameIndex, const std::vector<VkCommandBuffer> &commandBuffers)
+bool VulkanQueue::submitCommandBuffers(VkDevice logicalDevice, const std::vector<VkCommandBuffer> &commandBuffers) const
+{
+    // Submit info
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    // No sync objects to wait for or signal
+    submitInfo.waitSemaphoreCount = 0;
+    submitInfo.pWaitSemaphores = nullptr;
+    submitInfo.signalSemaphoreCount = 0;
+    submitInfo.pSignalSemaphores = nullptr;
+
+    // Command buffers
+    submitInfo.commandBufferCount = commandBuffers.size();
+    submitInfo.pCommandBuffers = commandBuffers.data();
+
+    // Fence object
+    VkFence signalFence = VK_NULL_HANDLE;
+    VkFenceCreateInfo fenceCreateInfo = {};
+    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceCreateInfo.flags = 0;
+    if (vkCreateFence(logicalDevice, &fenceCreateInfo, nullptr, &signalFence) != VK_SUCCESS)
+    {
+        std::cout << "Failed to create fence object. \n";
+        return false;
+    }
+
+    // Submit command buffers to queue
+    // Pass in fence object to be signalled once the command buffer finishes the work
+    if (vkQueueSubmit(m_queueHandle, 1, &submitInfo, signalFence) != VK_SUCCESS)
+    {
+        std::cout << "Failed to submit command buffers to queue.\n";
+        return false;
+    }
+
+    // Wait for the command buffer to finish executing
+    if (vkWaitForFences(logicalDevice, 1, &signalFence, VK_TRUE, std::numeric_limits<uint64_t>::max()) != VK_SUCCESS)
+    {
+        std::cout << "Failed to wait for the fence submit command buffer to be signalled.\n";
+        return false;
+    }
+
+    // Success
+    return true;
+}
+
+bool VulkanQueue::submitCommandBuffers(const VulkanSynchronizationObject &syncObject, 
+    uint32_t currentFrameIndex, 
+    const std::vector<VkCommandBuffer> &commandBuffers) const
 {
     assert(currentFrameIndex != -1 && "Invalid current frame index");
 
