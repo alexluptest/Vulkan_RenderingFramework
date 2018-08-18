@@ -13,45 +13,22 @@ bool VulkanBuffer::init(const VulkanPhysicalDevice &physicalDevice,
     void *data,
     const VulkanQueue &queue)
 {
-    assert(data != nullptr && "Invalid data to set in the buffer.\n");
-    assert(elementSize != 0 && "Invalid element size.\n");
-    const size_t bufferSize = elementSize * elementCount;
-    m_elementCount = elementCount;
-    m_elementSize = elementSize;
-
-    // Create staging buffer
-    if (createBuffer(physicalDevice.get(), 
-        logicalDevice, 
-        bufferSize, 
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        m_stagingBuffer,
-        m_stagingBufferMem) == 0)
+    if (bufferUsage == VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ||
+        bufferUsage == VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
+    {
+        // Vertex or index buffer
+        return createVertexBuffer(physicalDevice, logicalDevice, elementSize, elementCount, bufferUsage, data, queue);
+    }
+    else if (bufferUsage == VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+    {
+        // Uniform buffer
+        return createUniformBuffer(physicalDevice, logicalDevice, elementSize, elementCount, bufferUsage, data, queue);
+    }
+    else
+    {
+        std::cout << "Invalid buffer usage.\n";
         return false;
-
-    // Copy data to the staging buffer
-    if (setStagingBufferData(logicalDevice, bufferSize, data) == 0)
-        return false;
-
-    // Create device buffer - use transfer dest flag so we can copy data from the staging buffer
-    if (createBuffer(physicalDevice.get(), 
-        logicalDevice,
-        bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | bufferUsage,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        m_buffer,
-        m_bufferMemory) == 0)
-        return false;
-
-    // Copy data from the staging buffer to the device buffer
-    if (copyBuffer(logicalDevice, physicalDevice.getGraphicsQueueFamilyIndex(), bufferSize, m_stagingBuffer, m_buffer, queue) == 0)
-        return false;
-
-    // Clean staging buffer
-    cleanupStagingBuffer(logicalDevice);
-
-    // Success
-    return true;
+    }
 }
 
 bool VulkanBuffer::setStagingBufferData(VkDevice device, size_t bufferSize, void *data)
@@ -75,12 +52,35 @@ bool VulkanBuffer::setStagingBufferData(VkDevice device, size_t bufferSize, void
     return true;
 }
 
+bool VulkanBuffer::updateUniformData(VkDevice device, uint32_t currentImage, void *data, size_t dataSize)
+{
+    assert(currentImage != -1 && "Invalid current image.");
+    assert(data != nullptr && "Invalid data to set as uniform.");
+    assert(dataSize != 0 && "Invalid uniform data size.");
+
+    void *mappedMemory = nullptr;
+    if (vkMapMemory(device, m_memoryBuffers[currentImage], 0, dataSize, 0, &mappedMemory) != VK_SUCCESS)
+    {
+        std::cout << "Failed to map uniform buffer memory.\n";
+        return false;
+    }
+    memcpy(mappedMemory, data, dataSize);
+    vkUnmapMemory(device, m_memoryBuffers[currentImage]);
+
+    // Success
+    return true;
+}
+
 void VulkanBuffer::cleanup(VkDevice device)
 {
-    if (m_buffer != VK_NULL_HANDLE)
-        vkDestroyBuffer(device, m_buffer, nullptr);
-    if (m_bufferMemory != VK_NULL_HANDLE)
-        vkFreeMemory(device, m_bufferMemory, nullptr);
+    for (auto bufferIndex = 0; bufferIndex < m_buffers.size(); ++bufferIndex)
+    {
+        if (m_buffers[bufferIndex] != VK_NULL_HANDLE)
+            vkDestroyBuffer(device, m_buffers[bufferIndex], nullptr);
+
+        if (m_memoryBuffers[bufferIndex] != VK_NULL_HANDLE)
+            vkFreeMemory(device, m_memoryBuffers[bufferIndex], nullptr);
+    }
 }
 
 void VulkanBuffer::cleanupStagingBuffer(VkDevice device)
@@ -199,6 +199,92 @@ bool VulkanBuffer::copyBuffer(VkDevice device,
 
     // Execute command buffer
     queue.submitCommandBuffers(device, tempCommandBuffers.get());
+
+    // Success
+    return true;
+}
+
+bool VulkanBuffer::createVertexBuffer(const VulkanPhysicalDevice &physicalDevice, 
+    VkDevice logicalDevice,
+    size_t elementSize,
+    size_t elementCount,
+    VkBufferUsageFlags bufferUsage, 
+    void *data,
+    const VulkanQueue &queue)
+{
+    assert(data != nullptr && "Invalid data to set in the buffer.\n");
+    assert(elementSize != 0 && "Invalid element size.\n");
+    assert(elementCount != 0 && "Invalid element count.\n");
+
+    m_buffers.resize(1);
+    m_memoryBuffers.resize(1);
+
+    const size_t bufferSize = elementSize * elementCount;
+    m_elementCount = elementCount;
+    m_elementSize = elementSize;
+
+    // Create staging buffer
+    if (createBuffer(physicalDevice.get(), 
+        logicalDevice, 
+        bufferSize, 
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        m_stagingBuffer,
+        m_stagingBufferMem) == 0)
+        return false;
+
+    // Copy data to the staging buffer
+    if (setStagingBufferData(logicalDevice, bufferSize, data) == 0)
+        return false;
+
+    // Create device buffer - use transfer dest flag so we can copy data from the staging buffer
+    if (createBuffer(physicalDevice.get(), 
+        logicalDevice,
+        bufferSize,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | bufferUsage,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        m_buffers[0],
+        m_memoryBuffers[0]) == 0)
+        return false;
+
+    // Copy data from the staging buffer to the device buffer
+    if (copyBuffer(logicalDevice, physicalDevice.getGraphicsQueueFamilyIndex(), bufferSize, m_stagingBuffer, m_buffers[0], queue) == 0)
+        return false;
+
+    // Clean staging buffer
+    cleanupStagingBuffer(logicalDevice);
+
+    // Success
+    return true;
+}
+
+bool VulkanBuffer::createUniformBuffer(const VulkanPhysicalDevice &physicalDevice, 
+    VkDevice logicalDevice,
+    size_t elementSize,
+    size_t elementCount,
+    VkBufferUsageFlags bufferUsage, 
+    void *data,
+    const VulkanQueue &queue)
+{
+    assert(data != nullptr && "Invalid data to set in the buffer.\n");
+    assert(elementSize != 0 && "Invalid element size.\n");
+    assert(elementCount != 0 && "Invalid element count.\n");
+
+    m_buffers.resize(elementCount);
+    m_memoryBuffers.resize(elementCount);
+
+    // Create uniform buffers
+    for (auto bufferIndex = 0; bufferIndex < elementCount; ++bufferIndex)
+    {
+        if (createBuffer(physicalDevice.get(), 
+            logicalDevice,
+            elementSize * elementCount,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            m_buffers[bufferIndex],
+            m_memoryBuffers[bufferIndex]) == 0)
+            return false;
+    }
 
     // Success
     return true;

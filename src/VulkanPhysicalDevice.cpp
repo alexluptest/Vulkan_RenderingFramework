@@ -107,6 +107,9 @@ bool VulkanPhysicalDevice::init(VkInstance instance,
         return false;
     }
 
+    // Get the memory properties supported by the chosen physical device
+    vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
+
     // Initialize queue family indices
     if (!findQueueFamilies(requiredQueueFamilyFlags, surface))
         return false;

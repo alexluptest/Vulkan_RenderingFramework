@@ -15,6 +15,7 @@
 #include "VulkanCommandPool.h"
 #include "VulkanCommandBuffers.h"
 #include "VulkanBuffer.h"
+#include "VulkanImage.h"
 #include "Window.h"
 
 class VulkanEngine
@@ -55,6 +56,15 @@ private:
 
     VkClearValue m_clearColor = { 0.0f, 0.0f, 0.0f, 1.0f }; 
 
+    // Uniform buffer object
+    struct UniformBufferObject
+    {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
+    };
+    UniformBufferObject m_quadUniformData;
+
     Window m_window;
     VulkanInstance m_instance;
     VulkanPhysicalDevice m_physicalDevice;
@@ -67,6 +77,8 @@ private:
     VulkanCommandBuffers m_commandBuffers;
     VulkanBuffer m_quadVertexBuffer;
     VulkanBuffer m_quadIndexBuffer;
+    VulkanBuffer m_quadUniformBuffer;
+    VulkanImage m_testImage;
 
     // Synchronization
     VulkanSynchronizationObject m_swapChainSync;

@@ -16,6 +16,7 @@ public:
     inline const int getGraphicsQueueFamilyIndex() const { return m_graphicsQueueFamilyIndex; }
     inline const int getPresentationQueueFamilyIndex() const { return m_presentationQueueFamilyIndex; }
     inline const VkPhysicalDevice &get() const { return m_physicalDevice; }
+    inline const VkPhysicalDeviceMemoryProperties &getMemoryProperties() const { return m_memoryProperties; }
 
 private:
 
@@ -29,6 +30,7 @@ private:
     VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
     int m_graphicsQueueFamilyIndex = -1;
     int m_presentationQueueFamilyIndex = -1;
+    VkPhysicalDeviceMemoryProperties m_memoryProperties = {};
 
     bool hasRequiredFeatures(VkPhysicalDevice &physicalDevice,
         VkPhysicalDeviceProperties &deviceProperties,

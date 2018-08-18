@@ -159,6 +159,25 @@ bool VulkanGraphicsPipeline::init(VkDevice device,
         fragmentShader.shaderStageInfo() 
     };
 
+    // ---------------------------------
+    // TEMP - remove
+    // Descriptor layout, descriptor set layout, pipeline layout
+    if (createDescriptorSetLayout(device) == 0)
+        return false;
+    // Create descriptor pool
+    size_t imageCount = 2;
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    poolSizes.resize(1);
+    poolSizes[0].descriptorCount = imageCount;
+    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    if (m_descriptorPool.init(device, poolSizes, imageCount) == false)
+        return false;
+    // Create descriptor set
+    std::vector<VkDescriptorSetLayout> descSetLayouts = { m_quadDescriptorSetLayout, m_quadDescriptorSetLayout };
+    if (m_descriptorSets.init(device, m_descriptorPool, descSetLayouts) == false)
+        return false;
+    // ---------------------------------
+
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
     pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineCreateInfo.stageCount = 2;
@@ -171,15 +190,58 @@ bool VulkanGraphicsPipeline::init(VkDevice device,
     pipelineCreateInfo.pDepthStencilState = nullptr;
     pipelineCreateInfo.pColorBlendState = &colorBlending;
     pipelineCreateInfo.pDynamicState = &dynamicState;
-    pipelineCreateInfo.layout = m_pipelineLayout;
+    pipelineCreateInfo.layout = m_quadPipelineLayout;
     pipelineCreateInfo.renderPass = renderPass.get();
     pipelineCreateInfo.subpass = 0;
     pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineCreateInfo.basePipelineIndex = -1;
 
+    // Create graphics pipeline
     if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &m_graphicsPipeline) != VK_SUCCESS)
     {
         std::cout << "Failed to create the graphics pipeline. \n";
+        return false;
+    }
+
+    // Success
+    return true;
+}
+
+bool VulkanGraphicsPipeline::createDescriptorSetLayout(VkDevice device)
+{
+    // Every binding needs to be described using a VkDescriptorSetLayoutBinding
+    VkDescriptorSetLayoutBinding descriptorBinding = {};
+    descriptorBinding.binding = 0;
+    descriptorBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorBinding.descriptorCount = 1;
+    descriptorBinding.pImmutableSamplers = nullptr;
+    descriptorBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    // Descriptor set layout
+    // All descriptor bindings are combined into a descriptor set layout
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
+    descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorSetLayoutCreateInfo.bindingCount = 1;
+    descriptorSetLayoutCreateInfo.flags = 0;
+    descriptorSetLayoutCreateInfo.pBindings = &descriptorBinding;
+
+    // Create a descriptor set layout
+    if (vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, nullptr, &m_quadDescriptorSetLayout) != VK_SUCCESS)
+    {
+        std::cout << "Failed to create the descriptor set layout. \n";
+        return false;
+    }
+
+    // Create the pipeline layout
+    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
+    pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutCreateInfo.setLayoutCount = 1;
+    pipelineLayoutCreateInfo.pSetLayouts = &m_quadDescriptorSetLayout;
+
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+    if (vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &m_quadPipelineLayout) != VK_SUCCESS)
+    {
+        std::cout << "Failed to create pipeline layout. \n";
         return false;
     }
 
@@ -193,4 +255,10 @@ void VulkanGraphicsPipeline::cleanup(VkDevice device)
         vkDestroyPipeline(device, m_graphicsPipeline, nullptr);
     if (m_pipelineLayout != VK_NULL_HANDLE)
         vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
+
+    // Destroy the descriptor set layout
+    if (m_quadDescriptorSetLayout != VK_NULL_HANDLE)
+        vkDestroyDescriptorSetLayout(device, m_quadDescriptorSetLayout, nullptr);
+    if (m_quadPipelineLayout != VK_NULL_HANDLE)
+        vkDestroyPipelineLayout(device, m_quadPipelineLayout, nullptr);
 }

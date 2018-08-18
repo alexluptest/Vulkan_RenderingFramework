@@ -6,6 +6,8 @@
 #include "VulkanRenderPass.h"
 #include "VertexFormat.h"
 #include "VulkanBuffer.h"
+#include "VulkanDescriptorPool.h"
+#include "VulkanDescriptorSets.h"
 
 class VulkanGraphicsPipeline
 {
@@ -27,6 +29,13 @@ private:
 
     VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
     VkPipeline m_graphicsPipeline = VK_NULL_HANDLE;
+
+    // Quad descriptor
+    bool createDescriptorSetLayout(VkDevice device);
+    VkDescriptorSetLayout m_quadDescriptorSetLayout = VK_NULL_HANDLE;
+    VulkanDescriptorPool m_descriptorPool;
+    VulkanDescriptorSets m_descriptorSets;
+    VkPipelineLayout m_quadPipelineLayout = VK_NULL_HANDLE;
 };
 
 #endif // VULKANGRAPHICSPIPELINE_H

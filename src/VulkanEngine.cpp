@@ -65,6 +65,26 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
             VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
             reinterpret_cast<void*>(indices.data()),
             m_graphicsQueue) == 0) return false;
+    // Init uniform buffer
+    if (m_quadUniformBuffer.init(m_physicalDevice,
+            m_logicalDevice.get(),
+            sizeof(UniformBufferObject),
+            m_maxFramesInFlight,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            reinterpret_cast<void*>(&m_quadUniformData),
+            m_graphicsQueue) == 0) return false;
+
+    // Image
+    if (m_testImage.init(m_physicalDevice, 
+        m_logicalDevice.get(), 
+        VK_IMAGE_TYPE_2D, 
+        VK_FORMAT_R16G16B16A16_SFLOAT,
+        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        300, 300, 1, 1, 1, VK_SAMPLE_COUNT_1_BIT, 
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) == false) return false;
+
+    m_testImage.createView(m_logicalDevice.get(), VK_IMAGE_ASPECT_COLOR_BIT);
 
     // Setup command buffers
     if (setupCommandBuffers() == 0) return false;
@@ -92,6 +112,13 @@ void VulkanEngine::render()
     {
         std::cout << "Failed to acquire swap chain image.\n";    
     }
+
+    // Update uniform data
+    if (m_quadUniformBuffer.updateUniformData(m_logicalDevice.get(), 
+            m_currentFrameIndex,
+            reinterpret_cast<void*>(&m_quadUniformData),
+            sizeof(UniformBufferObject)) == 0)
+        std::cout << "Failed to update uniform data.\n";
 
     // Prepare a list of command buffers to be executed - we should submit just the command buffer
     // that binds the swap chain image that we just acquired. Execute command buffer 
