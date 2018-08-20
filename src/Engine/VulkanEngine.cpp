@@ -22,15 +22,12 @@ bool VulkanEngine::initVulkan(const std::string &appName, unsigned int appMajorV
     m_presentationQueue.init(m_logicalDevice.get(), m_physicalDevice.getPresentationQueueFamilyIndex(), 0);
     // Swap chain
     if (m_display.initSwapchain(m_physicalDevice, m_logicalDevice, m_width, m_height) == 0) return false;
-    // Shaders
-    if (m_testVertexShader.init(m_logicalDevice.get(), "./shaders/binaries/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT) == 0) return false;
-    if (m_testFragmentShader.init(m_logicalDevice.get(), "./shaders/binaries/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT) == 0) return false;
     // Create a render pass
     if (m_renderPass.init(m_logicalDevice.get(), m_display.surfaceFormat().format) == 0) return false;
     // Create framebuffers for each image view corresponding to each image in the swap chain
     if (m_display.createFramebuffers(m_logicalDevice.get(), m_renderPass.get()) == 0) return false;
     // Graphics pipeline
-    if (m_graphicsPipeline.init(m_logicalDevice.get(), m_width, m_height, m_testVertexShader, m_testFragmentShader, m_renderPass) == 0) return false;
+    if (m_graphicsPipeline.init(m_logicalDevice.get(), m_width, m_height, m_renderPass) == 0) return false;
     // Command pool
     if (m_commandPool.init(m_logicalDevice.get(), m_physicalDevice.getGraphicsQueueFamilyIndex()) == 0) return false;
     // Command buffers

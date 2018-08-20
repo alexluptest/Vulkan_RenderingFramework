@@ -10,19 +10,19 @@ struct VertexPC
     glm::vec2 pos;
     glm::vec3 color;
 
-    static VkVertexInputBindingDescription getBindingDescription()
+    static std::vector<VkVertexInputBindingDescription> getBindingDescription()
     {
-        VkVertexInputBindingDescription bindingDescription = {};
-        bindingDescription.binding = 0;
-        bindingDescription.stride = sizeof(VertexPC);
-        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        std::vector<VkVertexInputBindingDescription> bindingDescriptions = {};
+        bindingDescriptions[0].binding = 0;
+        bindingDescriptions[0].stride = sizeof(VertexPC);
+        bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-        return bindingDescription;
+        return bindingDescriptions;
     }
 
-    static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions()
     {
-        std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions = {};
         
         // Position attribute - vec2
         attributeDescriptions[0].binding = 0;

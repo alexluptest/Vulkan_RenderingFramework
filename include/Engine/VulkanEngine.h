@@ -82,9 +82,6 @@ private:
 
     // Synchronization
     VulkanSynchronizationObject m_swapChainSync;
-
-    // Shaders
-    VulkanShader m_testVertexShader, m_testFragmentShader;
 };
 
 #endif // VULKANENGINE_H

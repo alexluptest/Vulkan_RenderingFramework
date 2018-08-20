@@ -5,13 +5,15 @@
             "browse": {
                 "path": [
                     "${workspaceFolder}",
-                    "${workspaceFolder}/include"
+                    "${workspaceFolder}/include/Engine",
+                    "${workspaceFolder}/include/App"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
                 "${workspaceFolder}",
-                "${workspaceFolder}/include"
+                "${workspaceFolder}/include/App",
+                "${workspaceFolder}/include/Engine"
             ],
             "defines": [],
             "compilerPath": "/bin/gcc",
