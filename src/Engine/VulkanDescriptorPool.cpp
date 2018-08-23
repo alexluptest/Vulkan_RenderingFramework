@@ -9,12 +9,14 @@ bool VulkanDescriptorPool::init(VkDevice device,
     assert(descriptorInfo.size() != 0 && "Invalid descriptor pool count.");
 
     // Descriptor pool info
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
-    descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    descriptorPoolCreateInfo.flags = 0;
-    descriptorPoolCreateInfo.maxSets = descriptorSetCountMax;
-    descriptorPoolCreateInfo.poolSizeCount = descriptorInfo.size();
-    descriptorPoolCreateInfo.pPoolSizes = descriptorInfo.data();
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+        VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,          // sType
+        nullptr,                                                // pNext
+        0,                                                      // flags
+        static_cast<uint32_t>(descriptorSetCountMax),           // descriptorSetCountMax
+        static_cast<uint32_t>(descriptorInfo.size()),           // poolSizeCount
+        descriptorInfo.data()                                   // pPoolSizes
+    };
 
     // Create descriptor pool
     if (vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)

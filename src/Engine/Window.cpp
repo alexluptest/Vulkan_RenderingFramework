@@ -4,6 +4,9 @@
 
 bool Window::init(const std::string &title, uint16_t width, uint16_t height)
 {
+    m_width = width;
+    m_height = height;
+    
     glfwSetErrorCallback(Window::error_callback);
 
     if (glfwInit() == false)

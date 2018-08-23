@@ -7,44 +7,77 @@ VulkanApp::VulkanApp()
     
 }
 
-VulkanApp::~VulkanApp()
+bool VulkanApp::init(uint32_t width, uint32_t height)
 {
+    // Window initialization
+    if (m_window.init("Vulkan", width, height) == 0) return false;
 
+    // Vulkan engine
+    m_vulkanEngine.printVersion();
+    unsigned int appVersionMajor = 1;
+    unsigned int appVersionMinor = 0;
+    // Init vulkan engine
+    if (m_vulkanEngine.initVulkan(m_window, "VulkanEngine", appVersionMajor, appVersionMinor) == false)
+    {
+        std::cout << "Failed to init Vulkan. Closing app... \n";
+        return false;
+    }
+
+    // Shaders
+    if (m_quadVertexShader.init(m_vulkanEngine.device(), "./shaders/binaries/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT) == 0) return false;
+    if (m_quadFragmentShader.init(m_vulkanEngine.device(), "./shaders/binaries/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT) == 0) return false;
+
+    // Create renderable objects
+    m_quad = std::make_unique<Quad>(m_vulkanEngine.device());
+    if (m_quad->init(m_vulkanEngine,
+        width, height,
+        { m_quadVertexShader.shaderStageInfo(), m_quadFragmentShader.shaderStageInfo() }) == false)
+    {
+        std::cout << "Failed to initialize quad.\n";
+        return false;
+    }
+
+    // Register renderable objects
+    m_vulkanEngine.addRenderable(*m_quad);
+
+    // Setup command buffers
+    if (m_vulkanEngine.setupCommandBuffers() == 0) return false;
+
+    // Success
+    return true;
 }
 
-bool VulkanApp::init(VkDevice device)
+void VulkanApp::update(double dt)
 {
-    // Shaders
-    if (m_quadVertexShader.init(device, "./shaders/binaries/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT) == 0) return false;
-    if (m_quadFragmentShader.init(device, "./shaders/binaries/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT) == 0) return false;
+    m_quad->update(dt, m_vulkanEngine.frameIndex());
+}
 
-    VkPipelineShaderStageCreateInfo shaderStagesInfo[] = { 
-        m_quadVertexShader.shaderStageInfo(),
-        m_quadFragmentShader.shaderStageInfo() 
-    };
+void VulkanApp::run()
+{
+    double dt = 0.0f;
 
+    while (!glfwWindowShouldClose(m_window.get()))
+    {
+        glfwPollEvents();
+        RenderInstance instance(m_vulkanEngine);
 
+        // Rendering
+        update(dt);
+    }
 
-
-    // ---------------------------------
-    // TEMP - remove
-    // Create descriptor pool
-    /*size_t imageCount = 2;
-    std::vector<VkDescriptorPoolSize> poolSizes;
-    poolSizes.resize(1);
-    poolSizes[0].descriptorCount = imageCount;
-    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    if (m_descriptorPool.init(device, poolSizes, imageCount) == false)
-        return false;
-    // Create descriptor set
-    std::vector<VkDescriptorSetLayout> descSetLayouts = { m_quadDescriptorSetLayout, m_quadDescriptorSetLayout };
-    if (m_descriptorSets.init(device, m_descriptorPool, descSetLayouts) == false)
-        return false;*/
-    // ---------------------------------
-
+    // Wait for the queue to finish executing commands before going further
+    vkDeviceWaitIdle(m_vulkanEngine.device());
 }
 
 void VulkanApp::cleanup()
 {
+    // Shaders
+    m_quadVertexShader.cleanup(m_vulkanEngine.device());
+    m_quadFragmentShader.cleanup(m_vulkanEngine.device());
 
+    m_quad->cleanup();
+
+    m_vulkanEngine.cleanup();
+
+    m_window.cleanup();
 }

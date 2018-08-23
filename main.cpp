@@ -1,29 +1,24 @@
 #include<iostream>
 
 #include "VulkanEngine.h"
+#include "VulkanApp.h"
  
 int main(int argc, char const *argv[])
 {
-    
-    unsigned int appVersionMajor = 1;
-    unsigned int appVersionMinor = 0;
+    uint32_t m_width = 800, m_height = 600;
 
-    auto &vulkanEngine = VulkanEngine::getInstance();
-    vulkanEngine.printVersion();
-
-    // Init vulkan
-    bool res = vulkanEngine.initVulkan("VulkanEngine", appVersionMajor, appVersionMinor);
-    if (res == false)
+    auto &vulkanApp = VulkanApp::getInstance();
+    if (vulkanApp.init(m_width, m_height) == false)
     {
-        std::cout << "Failed to init Vulkan. Closing app... \n";
+        std::cout << "Failed to initialize vulkan app.\n";
         return -1;
     }
 
     // Main loop
-    vulkanEngine.mainLoop();
+    vulkanApp.run();
 
     // Cleanup vulkan
-    vulkanEngine.cleanup();
+    vulkanApp.cleanup();
 
     return 0;
 }

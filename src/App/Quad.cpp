@@ -2,35 +2,147 @@
 
 #include <iostream>
 
-bool Quad::init(VkDevice device,
+#include "VulkanLogicalDevice.h"
+
+Quad::Quad(VkDevice device)
+    : m_logicalDevice(device)
+{
+
+}
+
+bool Quad::init(const VulkanEngine &engine,
     uint32_t width, uint32_t height, 
-    VkRenderPass renderPass,
     const std::vector<VkPipelineShaderStageCreateInfo> &shaderStagesInfo)
 {
+    m_width = width;
+    m_height = height;
+
     // Create pipeline layout
-    if (createPipelineLayout(device) == false) return false;
+    if (createPipelineLayout(engine.device()) == false) return false;
 
     // Create graphics pipeline
-    if (createGraphicsPipeline(device, width, height, renderPass, shaderStagesInfo) == false) return false;
+    if (createGraphicsPipeline(engine.device(), width, height, engine.renderPass().get(), shaderStagesInfo) == false) return false;
+
+    // Create descriptor pool
+    std::vector<VkDescriptorPoolSize> poolSizes = {
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 }
+    };
+    if (m_descriptorPool.init(engine.device(), poolSizes, poolSizes.size()) == false)
+        return false;
+
+    // Create descriptor set
+    if (m_descriptorSets.init(engine.device(), m_descriptorPool, { m_descriptorSetLayout }) == false)
+        return false;
+
+    // Setup geometry
+    if (setupGeometry(engine.physicalDevice(), engine.device(), engine.graphicsQueue(), engine.framesInFlight()) == false)
+        return false;
 
     // Success
     return true;
 }
     
-void Quad::cleanup(VkDevice device)
+void Quad::cleanup()
 {
     // Descriptor set layout
     if (m_descriptorSetLayout != VK_NULL_HANDLE)
-        vkDestroyDescriptorSetLayout(device, m_descriptorSetLayout, nullptr);
+        vkDestroyDescriptorSetLayout(m_logicalDevice, m_descriptorSetLayout, nullptr);
 
     // Pipeline layout
     if (m_pipelineLayout != VK_NULL_HANDLE)
-        vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
+        vkDestroyPipelineLayout(m_logicalDevice, m_pipelineLayout, nullptr);
+
+    // Descritpor pool
+    m_descriptorPool.cleanup(m_logicalDevice);
 }
 
-void Quad::render()
+void Quad::render(VkCommandBuffer currentCommandBuffer) const
 {
+    // Set dynamic viewport
+    VkViewport viewport = {};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = m_width;
+    viewport.height = m_height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
 
+    vkCmdSetViewport(currentCommandBuffer, 0, 1, &viewport);
+    // Bind the pipline
+    vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.get());
+    // Bind the quad vertex buffer
+    VkBuffer vertexBuffers[] = { m_quadVertexBuffer.get() };
+    VkDeviceSize offsets[] = { 0 };
+    vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, vertexBuffers, offsets);
+    // Bind the quad index buffer
+    vkCmdBindIndexBuffer(currentCommandBuffer, m_quadIndexBuffer.get(), 0, VK_INDEX_TYPE_UINT16);
+    // Send the draw command
+    vkCmdDrawIndexed(currentCommandBuffer, m_quadIndexBuffer.elementCount(), 1, 0, 0, 0);
+}
+
+void Quad::update(double dt, uint32_t frameIndex)
+{
+    // Update uniform data
+    if (m_quadUniformBuffer.updateUniformData(m_logicalDevice, 
+            frameIndex,
+            reinterpret_cast<void*>(&m_quadUniformData),
+            sizeof(UniformBufferObject)) == 0)
+        std::cout << "Failed to update uniform data.\n";
+}
+
+bool Quad::setupGeometry(const VulkanPhysicalDevice &physicalDevice, VkDevice device, const VulkanQueue &graphicsQueue, uint32_t framesInFlight)
+{
+    // Triangle vertex buffer setup
+    std::vector<VertexPC> vertices = {
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    };
+
+    std::vector<uint16_t> indices = {
+        0, 1, 2, 2, 3, 0
+    };
+
+    // Init vertex buffer
+    if (m_quadVertexBuffer.init(physicalDevice, 
+            device, 
+            sizeof(vertices[0]),
+            vertices.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            reinterpret_cast<void*>(vertices.data()),
+            graphicsQueue) == 0) return false;
+    // Init index buffer
+    if (m_quadIndexBuffer.init(physicalDevice,
+            device,
+            sizeof(indices[0]),
+            indices.size(),
+            VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+            reinterpret_cast<void*>(indices.data()),
+            graphicsQueue) == 0) return false;
+    // Init uniform buffer
+    if (m_quadUniformBuffer.init(physicalDevice,
+            device,
+            sizeof(UniformBufferObject),
+            framesInFlight,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            reinterpret_cast<void*>(&m_quadUniformData),
+            graphicsQueue) == 0) return false;
+
+    // Image
+    if (m_testImage.init(physicalDevice, 
+        device, 
+        VK_IMAGE_TYPE_2D, 
+        VK_FORMAT_R16G16B16A16_SFLOAT,
+        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        300, 300, 1, 1, 1, VK_SAMPLE_COUNT_1_BIT, 
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) == false) return false;
+
+    m_testImage.createView(device, VK_IMAGE_ASPECT_COLOR_BIT);
+
+    // Success
+    return true;
 }
 
 bool Quad::createPipelineLayout(VkDevice device)
