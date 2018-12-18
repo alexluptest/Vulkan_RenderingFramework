@@ -12,7 +12,7 @@ struct VertexPC
 
     static std::vector<VkVertexInputBindingDescription> getBindingDescription()
     {
-        std::vector<VkVertexInputBindingDescription> bindingDescriptions = {};
+        std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
         bindingDescriptions[0].binding = 0;
         bindingDescriptions[0].stride = sizeof(VertexPC);
         bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
@@ -22,7 +22,7 @@ struct VertexPC
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions()
     {
-        std::vector<VkVertexInputAttributeDescription> attributeDescriptions = {};
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions(2);
         
         // Position attribute - vec2
         attributeDescriptions[0].binding = 0;

@@ -39,12 +39,12 @@ bool VulkanGraphicsPipeline::init(VkDevice device,
 
     // Configure default fullscreen viewport and scissor size to use when they are not set dynamically
     VkViewport viewport = {
-        0.0f,       // x
-        0.0f,       // y
-        width,      // width
-        height,     // height
-        0.0f,       // minDepth
-        1.0f        // maxDepth
+        0.0f,                           // x
+        0.0f,                           // y
+        static_cast<float>(width),      // width
+        static_cast<float>(height),     // height
+        0.0f,                           // minDepth
+        1.0f                            // maxDepth
     };
     VkRect2D scissor = {
         { 0, 0 },           // offset

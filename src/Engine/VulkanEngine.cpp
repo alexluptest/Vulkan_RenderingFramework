@@ -33,7 +33,7 @@ bool VulkanEngine::initVulkan(const Window &window, const std::string &appName, 
     // Sync objects
     if (m_swapChainSync.init(m_logicalDevice.get(), m_maxFramesInFlight, m_maxFramesInFlight, m_maxFramesInFlight) == 0) return false;
     // Setup command buffers
-    if (setupCommandBuffers() == 0) return false;
+    //if (setupCommandBuffers() == 0) return false;
 
     // Success
     return res;
